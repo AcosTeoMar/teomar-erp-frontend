@@ -231,6 +231,20 @@
   }
 
   ::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-thumb{background:var(--petrol-600); border-radius:4px;}
+  /* ---------- MODAL USUÁRIOS ---------- */
+  .modal-bg{position:fixed; inset:0; background:rgba(4,9,13,0.72); display:none; align-items:center; justify-content:center; z-index:500;}
+  .modal-bg.active{display:flex;}
+  .modal-box{background:var(--petrol-800); border:1px solid rgba(185,198,205,0.18); border-radius:3px; width:92%; max-width:420px; padding:22px; max-height:88vh; overflow-y:auto;}
+  .modal-box h3{margin:0 0 16px; font-family:var(--font-display); font-weight:500; letter-spacing:.03em; color:var(--chrome-100); font-size:16px;}
+  .modal-box .field{margin-bottom:12px;}
+  .modal-box .field label{display:block; font-size:11px; color:var(--chrome-500); margin-bottom:5px; text-transform:uppercase; letter-spacing:.04em;}
+  .modal-box .field input, .modal-box .field select{width:100%; padding:10px 12px; background:var(--petrol-900); border:1px solid rgba(185,198,205,0.16); color:var(--chrome-100); font-family:var(--font-mono); font-size:13px; border-radius:2px;}
+  .modal-actions{display:flex; gap:10px; margin-top:18px;}
+  .modal-actions button{flex:1; padding:11px; border-radius:2px; font-family:var(--font-mono); font-size:12px; letter-spacing:.03em; cursor:pointer; border:1px solid rgba(185,198,205,0.2); background:transparent; color:var(--chrome-300);}
+  .modal-actions button.primary{background:var(--spark); border-color:var(--spark); color:#fff; font-weight:600;}
+  .usr-erro{display:none; color:var(--spark); font-size:11.5px; margin-bottom:10px;}
+  .usr-row-actions button{background:transparent; border:1px solid rgba(185,198,205,0.25); color:var(--chrome-300); border-radius:2px; padding:5px 10px; font-size:11px; font-family:var(--font-mono); cursor:pointer; margin-right:6px;}
+  .usr-row-actions button:hover{border-color:var(--torch-glow); color:var(--torch-glow);}
 </style>
 </head>
 <body>
@@ -339,16 +353,49 @@
         <!-- /view-painel -->
 
         <div class="view" id="view-usuarios">
-          <div class="panel"><h2>Usuários e Permissões</h2>
-            <div style="overflow-x:auto;"><table>
-              <tr><th>Nome</th><th>Perfil</th><th>Acesso</th><th>Status</th></tr>
-              <tr><td>Marcos T.</td><td>Administrador</td><td>Todos os módulos</td><td><span class="tag green">Ativo</span></td></tr>
-              <tr><td>Renata S.</td><td>Vendedor</td><td>Clientes, CRM, Comissão, Materiais, Calculadora, Frete, Estoque, Orçamentos, Vendas</td><td><span class="tag green">Ativo</span></td></tr>
-              <tr><td>Carlos M.</td><td>Vendedor</td><td>Clientes, CRM, Comissão, Materiais, Calculadora, Frete, Estoque, Orçamentos, Vendas</td><td><span class="tag green">Ativo</span></td></tr>
-              <tr><td>João P.</td><td>Cortador</td><td>Vendas (sem valores)</td><td><span class="tag green">Ativo</span></td></tr>
-              <tr><td>Ana Ferreira</td><td>Financeiro</td><td>Financeiro, Vendas, Nota Fiscal</td><td><span class="tag green">Ativo</span></td></tr>
-              <tr><td>Camila Duarte</td><td>RH</td><td>Funcionários</td><td><span class="tag green">Ativo</span></td></tr>
+          <div class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+              <h2 style="margin:0;">Usuários e Permissões</h2>
+              <button class="btn-primary" style="width:auto;padding:10px 16px;" onclick="abrirModalUsuario()">+ Novo Usuário</button>
+            </div>
+            <p id="usr-status" style="font-size:11px;color:var(--chrome-500);margin:6px 0 14px;">Conectando à API...</p>
+            <div style="overflow-x:auto;"><table id="tbl-usuarios">
+              <tr><th>Nome</th><th>Cargo</th><th>Perfil</th><th>Status</th><th></th></tr>
+              <tr><td colspan="5" style="color:var(--chrome-700);">Carregando...</td></tr>
             </table></div>
+          </div>
+
+          <!-- Modal de criar/editar usuário -->
+          <div class="modal-bg" id="modal-usuario">
+            <div class="modal-box">
+              <h3 id="usr-modal-titulo">Novo Usuário</h3>
+              <div class="usr-erro" id="usr-modal-erro"></div>
+              <input type="hidden" id="usr-id"/>
+              <div class="field"><label>Nome</label><input type="text" id="usr-nome" placeholder="Nome completo"/></div>
+              <div class="field"><label>Login</label><input type="text" id="usr-login" placeholder="ex: joao"/></div>
+              <div class="field" id="usr-senha-field"><label>Senha</label><input type="password" id="usr-senha" placeholder="mínimo 6 caracteres"/></div>
+              <div class="field"><label>Cargo</label><input type="text" id="usr-cargo" placeholder="ex: Vendedor"/></div>
+              <div class="field"><label>Perfil de Acesso</label>
+                <select id="usr-role">
+                  <option value="admin">Administrador</option>
+                  <option value="vendedor">Vendedor</option>
+                  <option value="cortador">Cortador</option>
+                  <option value="financeiro">Financeiro</option>
+                  <option value="rh">RH</option>
+                </select>
+              </div>
+              <div class="field" id="usr-ativo-field" style="display:none;">
+                <label>Status</label>
+                <select id="usr-ativo">
+                  <option value="true">Ativo</option>
+                  <option value="false">Inativo (desativado)</option>
+                </select>
+              </div>
+              <div class="modal-actions">
+                <button onclick="fecharModalUsuario()">Cancelar</button>
+                <button class="primary" onclick="salvarUsuarioAPI()">Salvar</button>
+              </div>
+            </div>
           </div>
           <div class="panel">
             <h2>Registro de Atividades</h2>
@@ -997,6 +1044,32 @@
   const PROFILE_PHOTOS = {}; // fica na memória da sessão — no sistema real seria salvo no perfil do usuário no banco
   let currentLoginKey = 'marcos';
 
+  // ================= API REAL (Usuários e Permissões) =================
+  // Conecta no backend de verdade (Railway) só pra essa tela, que já usa banco PostgreSQL de fato.
+  const API_BASE = 'https://teomar-erp-backend-production-dab9.up.railway.app';
+  let API_TOKEN = localStorage.getItem('teomar_api_token') || null;
+  let API_USER = null;
+  let apiLoginPromise = null;
+
+  async function apiLogin(login, senha){
+    try{
+      const resp = await fetch(API_BASE+'/api/auth/login', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({login, senha})
+      });
+      const data = await resp.json();
+      if(!resp.ok){ API_TOKEN = null; API_USER = null; return false; }
+      API_TOKEN = data.token;
+      API_USER = data.usuario;
+      localStorage.setItem('teomar_api_token', API_TOKEN);
+      return true;
+    }catch(e){
+      API_TOKEN = null;
+      return false;
+    }
+  }
+
   function fazerLogin(){
     const u = (document.getElementById('login-user').value || '').trim().toLowerCase().split('@')[0];
     const p = document.getElementById('login-pass').value || '';
@@ -1018,11 +1091,137 @@
     document.getElementById('login-pass').value = '';
     aplicarVisibilidadePorPerfil();
     if(typeof renderChat === 'function') renderChat();
+    apiLoginPromise = apiLogin(u, p); // tenta autenticar também na API real (usada pela tela de Usuários)
   }
 
   function fazerLogout(){
     document.getElementById('dash').classList.remove('active');
     document.getElementById('login').classList.remove('hidden');
+  }
+
+  // ================= TELA DE USUÁRIOS (API REAL) =================
+  const ROLE_LABELS = {admin:'Administrador', vendedor:'Vendedor', cortador:'Cortador', financeiro:'Financeiro', rh:'RH'};
+
+  async function renderUsuariosReal(){
+    const status = document.getElementById('usr-status');
+    const tbl = document.getElementById('tbl-usuarios');
+    if(!API_TOKEN){
+      let ok = false;
+      if(apiLoginPromise) ok = await apiLoginPromise;
+      if(!ok){
+        status.textContent = 'Não foi possível conectar com a API usando o login atual. Faça login novamente com um usuário admin ou RH cadastrado no banco (ex: marcos/admin123).';
+        status.style.color = 'var(--spark)';
+        tbl.innerHTML = '<tr><th>Nome</th><th>Cargo</th><th>Perfil</th><th>Status</th><th></th></tr><tr><td colspan="5" style="color:var(--chrome-700);">Sem conexão com a API.</td></tr>';
+        return;
+      }
+    }
+    status.textContent = 'Conectado à API.';
+    status.style.color = 'var(--chrome-500)';
+    tbl.innerHTML = '<tr><th>Nome</th><th>Cargo</th><th>Perfil</th><th>Status</th><th></th></tr><tr><td colspan="5" style="color:var(--chrome-700);">Carregando...</td></tr>';
+    try{
+      const resp = await fetch(API_BASE+'/api/usuarios', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(resp.status === 401){
+        API_TOKEN = null; localStorage.removeItem('teomar_api_token');
+        return renderUsuariosReal();
+      }
+      if(resp.status === 403){
+        tbl.innerHTML = '<tr><th>Nome</th><th>Cargo</th><th>Perfil</th><th>Status</th><th></th></tr><tr><td colspan="5" style="color:var(--chrome-700);">Seu usuário não tem permissão para ver esta lista (só admin e RH podem).</td></tr>';
+        return;
+      }
+      const usuarios = await resp.json();
+      let html = '<tr><th>Nome</th><th>Cargo</th><th>Perfil</th><th>Status</th><th></th></tr>';
+      usuarios.forEach(u => {
+        html += '<tr>'
+          +'<td>'+u.nome+'</td>'
+          +'<td>'+(u.cargo||'—')+'</td>'
+          +'<td>'+(ROLE_LABELS[u.role]||u.role)+'</td>'
+          +'<td><span class="tag '+(u.ativo?'green':'red')+'">'+(u.ativo?'Ativo':'Inativo')+'</span></td>'
+          +'<td class="usr-row-actions"><button onclick=\'abrirModalUsuario('+JSON.stringify(u).replace(/'/g,"&#39;")+')\'>Editar</button></td>'
+          +'</tr>';
+      });
+      tbl.innerHTML = html;
+    }catch(e){
+      tbl.innerHTML = '<tr><th>Nome</th><th>Cargo</th><th>Perfil</th><th>Status</th><th></th></tr><tr><td colspan="5" style="color:var(--spark);">Erro ao carregar usuários. Confira sua conexão com a internet.</td></tr>';
+    }
+  }
+
+  function abrirModalUsuario(usuario){
+    document.getElementById('usr-modal-erro').style.display = 'none';
+    document.getElementById('usr-nome').value = '';
+    document.getElementById('usr-login').value = '';
+    document.getElementById('usr-senha').value = '';
+    document.getElementById('usr-cargo').value = '';
+    document.getElementById('usr-role').value = 'vendedor';
+    document.getElementById('usr-id').value = '';
+    document.getElementById('usr-ativo-field').style.display = 'none';
+    document.getElementById('usr-senha-field').style.display = 'block';
+    document.getElementById('usr-login').disabled = false;
+
+    if(usuario && usuario.id){
+      document.getElementById('usr-modal-titulo').textContent = 'Editar Usuário';
+      document.getElementById('usr-id').value = usuario.id;
+      document.getElementById('usr-nome').value = usuario.nome || '';
+      document.getElementById('usr-login').value = usuario.login || '';
+      document.getElementById('usr-login').disabled = true; // login não muda depois de criado
+      document.getElementById('usr-cargo').value = usuario.cargo || '';
+      document.getElementById('usr-role').value = usuario.role || 'vendedor';
+      document.getElementById('usr-senha-field').style.display = 'none'; // troca de senha é feita pelo próprio usuário
+      document.getElementById('usr-ativo-field').style.display = 'block';
+      document.getElementById('usr-ativo').value = usuario.ativo ? 'true' : 'false';
+    } else {
+      document.getElementById('usr-modal-titulo').textContent = 'Novo Usuário';
+    }
+    document.getElementById('modal-usuario').classList.add('active');
+  }
+
+  function fecharModalUsuario(){
+    document.getElementById('modal-usuario').classList.remove('active');
+  }
+
+  async function salvarUsuarioAPI(){
+    const erro = document.getElementById('usr-modal-erro');
+    erro.style.display = 'none';
+    const id = document.getElementById('usr-id').value;
+    const nome = document.getElementById('usr-nome').value.trim();
+    const login = document.getElementById('usr-login').value.trim();
+    const senha = document.getElementById('usr-senha').value;
+    const cargo = document.getElementById('usr-cargo').value.trim();
+    const role = document.getElementById('usr-role').value;
+
+    if(!id && (!nome || !login || !senha)){
+      erro.textContent = 'Preencha nome, login e senha.';
+      erro.style.display = 'block';
+      return;
+    }
+
+    try{
+      let resp;
+      if(id){
+        const ativo = document.getElementById('usr-ativo').value === 'true';
+        resp = await fetch(API_BASE+'/api/usuarios/'+id+'/perfil', {
+          method:'PUT',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+          body: JSON.stringify({role, cargo, ativo})
+        });
+      } else {
+        resp = await fetch(API_BASE+'/api/usuarios', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+          body: JSON.stringify({nome, login, senha, cargo, role})
+        });
+      }
+      const data = await resp.json();
+      if(!resp.ok){
+        erro.textContent = data.erro || 'Erro ao salvar usuário.';
+        erro.style.display = 'block';
+        return;
+      }
+      fecharModalUsuario();
+      renderUsuariosReal();
+    }catch(e){
+      erro.textContent = 'Erro de conexão com a API.';
+      erro.style.display = 'block';
+    }
   }
 
   function aplicarFotoPerfilNoTopbar(iniciais){
@@ -1106,6 +1305,7 @@
       if (target) target.classList.add('active');
       titleEl.textContent = item.dataset.title;
       closeMenu();
+      if(item.dataset.view === 'usuarios') renderUsuariosReal();
     });
   });
 
