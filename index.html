@@ -430,24 +430,41 @@
 
         <div class="view" id="view-clientes">
           <div class="panel">
-            <h2>Cadastrar Cliente</h2>
+            <h2 id="cl-form-titulo">Cadastrar Cliente</h2>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <input type="hidden" id="cl-id"/>
               <div class="field" style="grid-column:1/-1;"><label>Razão Social</label><input type="text" id="cl-razao" value=""/></div>
               <div class="field"><label>Nome Fantasia</label><input type="text" id="cl-fantasia" value=""/></div>
-              <div class="field"><label>CNPJ/CPF</label><input type="text" id="cl-cnpj" value=""/></div>
-              <div class="field"><label>Telefone</label><input type="text" id="cl-tel" value=""/></div>
-              <div class="field"><label>WhatsApp</label><input type="text" id="cl-whats" value=""/></div>
+              <div class="field"><label>Tipo de Documento</label>
+                <select id="cl-doc-tipo" onchange="document.getElementById('cl-cnpj').value=''; document.getElementById('cl-cnpj').placeholder=(this.value==='CPF'?'000.000.000-00':'00.000.000/0000-00');" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
+                  <option value="CNPJ">CNPJ</option>
+                  <option value="CPF">CPF</option>
+                </select>
+              </div>
+              <div class="field"><label>Nº do Documento</label><input type="text" id="cl-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=maskCnpjCpf(this.value, document.getElementById('cl-doc-tipo').value)"/></div>
+              <div class="field"><label>Inscrição Estadual (IE)</label><input type="text" id="cl-ie" placeholder="ex: 123.456.789.012 ou Isento" value=""/></div>
+              <div class="field"><label>Telefone</label><input type="text" id="cl-tel" placeholder="(00) 0000-0000" oninput="this.value=maskTelefone(this.value)"/></div>
+              <div class="field"><label>WhatsApp</label><input type="text" id="cl-whats" placeholder="(00) 00000-0000" oninput="this.value=maskTelefone(this.value)"/></div>
               <div class="field" style="grid-column:1/-1;"><label>E-mail</label><input type="email" id="cl-email" value=""/></div>
               <div class="field" style="grid-column:1/-1;"><label>Endereço Completo</label><input type="text" id="cl-endereco" value=""/></div>
               <div class="field"><label>Contato / Solicitante (pessoa no cliente)</label><input type="text" id="cl-contato" value=""/></div>
               <div class="field"><label>Vendedor Responsável (nosso)</label>
                 <select id="cl-vendedor" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
-                  <option>Renata S.</option><option>João P.</option><option>Carlos M.</option>
+                  <option>Renata S.</option><option>João P.</option><option>Carlos M.</option><option>Marcos T.</option>
                 </select>
               </div>
               <div class="field"><label>Forma de Pagamento</label>
                 <select id="cl-pagamento" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
-                  <option>À vista</option><option>Boleto 30 dias</option><option>Boleto 30/60</option><option>Boleto 30/60/90</option><option>Cartão</option>
+                  <option>À vista</option>
+                  <option>7 DDL</option>
+                  <option>14 DDL</option>
+                  <option>21 DDL</option>
+                  <option>28 DDL</option>
+                  <option>30 DDL</option>
+                  <option>14/28 DDL</option>
+                  <option>14/28/35 DDL</option>
+                  <option>Ato/30/45/60 DDL</option>
+                  <option>Ato/15/30/45/60 DDL</option>
                 </select>
               </div>
               <div class="field"><label>Status</label>
@@ -457,34 +474,65 @@
               </div>
             </div>
             <button class="btn-primary" style="width:auto;padding:12px 20px;margin-top:8px;" onclick="salvarCliente()">Salvar Cliente</button>
+            <button style="width:auto;padding:12px 20px;margin-top:8px;margin-left:8px;background:transparent;border:1px solid rgba(185,198,205,0.2);color:var(--chrome-300);border-radius:2px;cursor:pointer;" onclick="cancelarEdicaoCliente()">Cancelar</button>
           </div>
           <div class="panel"><h2>Clientes Cadastrados</h2>
             <div style="overflow-x:auto;"><table id="tbl-clientes">
-              <tr><th>Razão Social</th><th>Nome Fantasia</th><th>CNPJ/CPF</th><th>Contato/Solicitante</th><th>Vendedor</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th>Endereço</th><th>Forma Pagto.</th><th>Status</th></tr>
-              <tr><td>Metalúrgica Sul Ltda.</td><td>Metalúrgica Sul</td><td>12.345.678/0001-90</td><td>Paulo Andrade</td><td>Renata S.</td><td>(54) 3221-0098</td><td>(54) 99911-2233</td><td>compras@metalsul.com.br</td><td>Rua das Indústrias, 450 — Caxias do Sul/RS</td><td>Boleto 30/60</td><td><span class="tag green">Ativo</span></td></tr>
-              <tr><td>Construtora Vega Ltda.</td><td>Construtora Vega</td><td>98.765.432/0001-10</td><td>Marina Costa</td><td>Carlos M.</td><td>(51) 3245-1122</td><td>(51) 99877-6655</td><td>compras@vega.com.br</td><td>Av. Assis Brasil, 2200 — Porto Alegre/RS</td><td>À vista</td><td><span class="tag green">Ativo</span></td></tr>
-              <tr><td>Indústria Reifer S.A.</td><td>Reifer</td><td>11.222.333/0001-44</td><td>Diego Fontana</td><td>Carlos M.</td><td>(51) 3567-8899</td><td>(51) 98765-4321</td><td>financeiro@reifer.com.br</td><td>Rua XV de Novembro, 88 — Novo Hamburgo/RS</td><td>Boleto 30/60/90</td><td><span class="tag amber">Inativo</span></td></tr>
+              <tr><th>Razão Social</th><th>Nome Fantasia</th><th>Documento</th><th>IE</th><th>Contato/Solicitante</th><th>Vendedor</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th>Endereço</th><th>Forma Pagto.</th><th>Status</th><th></th></tr>
             </table></div>
           </div>
         </div>
 
         <div class="view" id="view-fornecedores">
-          <div class="panel"><h2>Fornecedores</h2>
+          <div class="panel">
+            <h2 id="forn-form-titulo">Cadastrar Fornecedor</h2>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <input type="hidden" id="forn-id"/>
+              <div class="field" style="grid-column:1/-1;"><label>Razão Social</label><input type="text" id="forn-razao" value=""/></div>
+              <div class="field"><label>O que Fornece</label><input type="text" id="forn-fornece" value=""/></div>
+              <div class="field"><label>Tipo de Documento</label>
+                <select id="forn-doc-tipo" onchange="document.getElementById('forn-cnpj').value=''; document.getElementById('forn-cnpj').placeholder=(this.value==='CPF'?'000.000.000-00':'00.000.000/0000-00');" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
+                  <option value="CNPJ">CNPJ</option>
+                  <option value="CPF">CPF</option>
+                </select>
+              </div>
+              <div class="field"><label>Nº do Documento</label><input type="text" id="forn-cnpj" placeholder="00.000.000/0000-00" oninput="this.value=maskCnpjCpf(this.value, document.getElementById('forn-doc-tipo').value)"/></div>
+              <div class="field"><label>Inscrição Estadual (IE)</label><input type="text" id="forn-ie" placeholder="ex: 123.456.789.012 ou Isento" value=""/></div>
+              <div class="field"><label>Vendedor (deles / contato)</label><input type="text" id="forn-vendedor" value=""/></div>
+              <div class="field"><label>Telefone</label><input type="text" id="forn-tel" placeholder="(00) 0000-0000" oninput="this.value=maskTelefone(this.value)"/></div>
+              <div class="field"><label>WhatsApp</label><input type="text" id="forn-whats" placeholder="(00) 00000-0000" oninput="this.value=maskTelefone(this.value)"/></div>
+              <div class="field" style="grid-column:1/-1;"><label>E-mail</label><input type="email" id="forn-email" value=""/></div>
+              <div class="field" style="grid-column:1/-1;"><label>Endereço Completo</label><input type="text" id="forn-endereco" value=""/></div>
+              <div class="field"><label>Condição de Pagamento</label><input type="text" id="forn-pagamento" placeholder="ex: 30/60/90" value=""/></div>
+            </div>
+            <button class="btn-primary" style="width:auto;padding:12px 20px;margin-top:8px;" onclick="salvarFornecedor()">Salvar Fornecedor</button>
+            <button style="width:auto;padding:12px 20px;margin-top:8px;margin-left:8px;background:transparent;border:1px solid rgba(185,198,205,0.2);color:var(--chrome-300);border-radius:2px;cursor:pointer;" onclick="cancelarEdicaoFornecedor()">Cancelar</button>
+          </div>
+          <div class="panel"><h2>Fornecedores Cadastrados</h2>
             <div style="overflow-x:auto;"><table id="tbl-fornecedores">
-              <tr><th>Razão Social</th><th>Fornece</th><th>Vendedor (deles)</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th>Endereço</th><th>Condição Pagto.</th></tr>
-              <tr><td>Gerdau Aços Especiais S.A.</td><td>Barras e Tubos</td><td>Ricardo Tavares</td><td>(51) 3288-4400</td><td>(51) 99123-8877</td><td>vendas@gerdau.com.br</td><td>Av. das Indústrias, 1000 — Sapucaia do Sul/RS</td><td>30/60/90</td></tr>
-              <tr><td>Usiminas Comercial Ltda.</td><td>Chapas</td><td>Marcelo Nunes</td><td>(31) 3499-2200</td><td>(31) 98811-3344</td><td>comercial@usiminas.com.br</td><td>Rua Prof. José Vieira de Mendonça, 3011 — Belo Horizonte/MG</td><td>28 dias</td></tr>
+              <tr><th>Razão Social</th><th>Fornece</th><th>Documento</th><th>IE</th><th>Vendedor (deles)</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th>Endereço</th><th>Condição Pagto.</th><th></th></tr>
             </table></div>
           </div>
         </div>
 
         <div class="view" id="view-materiais">
+          <div class="panel">
+            <h2>Cadastrar Material / Liga</h2>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+              <div class="field"><label>Código</label><input type="text" id="mat-codigo" placeholder="ex: BR-RD12"/></div>
+              <div class="field"><label>Descrição / Liga</label><input type="text" id="mat-desc" placeholder="ex: Barra Redonda 12mm — SAE 1045"/></div>
+              <div class="field"><label>Norma</label><input type="text" id="mat-norma" placeholder="ex: NBR 6591"/></div>
+              <div class="field"><label>Medida</label><input type="text" id="mat-medida" placeholder="ex: Ø 12 mm"/></div>
+              <div class="field"><label>Preço por kg (R$)</label><input type="number" id="mat-preco" step="0.01" placeholder="ex: 8.90"/></div>
+              <div class="field"><label>Estoque Inicial (kg)</label><input type="number" id="mat-estoque-inicial" value="0"/></div>
+              <div class="field"><label>Estoque Mínimo (kg)</label><input type="number" id="mat-estoque-minimo" value="0"/></div>
+            </div>
+            <p class="usr-erro" id="mat-erro" style="display:none;"></p>
+            <button class="btn-primary" style="width:auto;padding:11px 18px;" onclick="cadastrarMaterial()">+ Cadastrar Material</button>
+          </div>
           <div class="panel"><h2>Materiais Cadastrados</h2>
-            <div style="overflow-x:auto;"><table>
-              <tr><th>Código</th><th>Descrição</th><th>Norma</th><th>Estoque Atual</th><th>Estoque Mín.</th><th>Preço/kg</th></tr>
-              <tr><td>TB-1020</td><td>Tubo SAE 1020</td><td>NBR 6591</td><td class="cell-estoque" data-cod="TB-1020">—</td><td>500 kg</td><td>R$ 8,90</td></tr>
-              <tr><td>CH-XAD</td><td>Chapa Xadrez</td><td>NBR 5920</td><td class="cell-estoque" data-cod="CH-XAD">—</td><td>300 kg</td><td>R$ 11,40</td></tr>
-              <tr><td>BR-RD10</td><td>Barra Redonda 10mm</td><td>SAE 1045</td><td class="cell-estoque" data-cod="BR-RD10">—</td><td>200 kg</td><td>R$ 7,60</td></tr>
+            <div style="overflow-x:auto;"><table id="tbl-materiais">
+              <tr><th>Código</th><th>Descrição</th><th>Norma</th><th>Medida</th><th>Estoque Atual</th><th>Estoque Mín.</th><th>Preço/kg</th></tr>
             </table></div>
           </div>
         </div>
@@ -653,11 +701,24 @@
               <div class="field" style="grid-column:1/-1;"><label>E-mail</label><input type="email" id="norc-email" value="compras@metalsul.com.br"/></div>
               <div class="field"><label>Vendedor Responsável</label>
                 <select id="norc-vendedor" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
-                  <option>Renata S.</option><option>Carlos M.</option>
+                  <option>Renata S.</option><option>Carlos M.</option><option>Marcos T.</option>
                 </select>
               </div>
               <div class="field"><label>Proposta Válida por (dias úteis)</label><input type="text" inputmode="numeric" id="norc-validade-dias" value="3"/></div>
-              <div class="field"><label>Forma de Pagamento</label><input type="text" id="norc-pagamento" value="À vista (Pix — necessário envio do comprovante para liberar corte)"/></div>
+              <div class="field"><label>Forma de Pagamento</label>
+                <select id="norc-pagamento" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
+                  <option>À vista</option>
+                  <option>7 DDL</option>
+                  <option>14 DDL</option>
+                  <option>21 DDL</option>
+                  <option>28 DDL</option>
+                  <option>30 DDL</option>
+                  <option>14/28 DDL</option>
+                  <option>14/28/35 DDL</option>
+                  <option>Ato/30/45/60 DDL</option>
+                  <option>Ato/15/30/45/60 DDL</option>
+                </select>
+              </div>
               <div class="field"><label>Condição de Entrega</label><input type="text" id="norc-condicao-entrega" value="Por conta da TeoMar na região atendida (demais regiões, frete a combinar)"/></div>
             </div>
           </div>
@@ -961,8 +1022,9 @@
 
         <div class="view" id="view-funcionarios">
           <div class="panel">
-            <h2>Cadastrar Funcionário</h2>
+            <h2 id="fn-form-titulo">Cadastrar Funcionário</h2>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <input type="hidden" id="fn-id"/>
               <div class="field" style="grid-column:1/-1;"><label>Nome Completo</label><input type="text" id="fn-nome" value=""/></div>
               <div class="field"><label>Cargo</label><input type="text" id="fn-cargo" value=""/></div>
               <div class="field"><label>Perfil de Acesso</label>
@@ -970,9 +1032,23 @@
                   <option>Administrador</option><option>Vendedor</option><option>Cortador</option><option>Financeiro</option><option>RH</option>
                 </select>
               </div>
-              <div class="field"><label>CPF</label><input type="text" id="fn-cpf" value=""/></div>
-              <div class="field"><label>Telefone</label><input type="text" id="fn-tel" value=""/></div>
+              <div class="field"><label>Vínculo</label>
+                <select id="fn-vinculo" onchange="document.getElementById('fn-doc-tipo').value = this.value==='CLT' ? 'CPF' : document.getElementById('fn-doc-tipo').value;" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
+                  <option value="CLT">CLT</option>
+                  <option value="PJ">Sem vínculo empregatício (PJ / Autônomo)</option>
+                </select>
+              </div>
+              <div class="field"><label>Tipo de Documento</label>
+                <select id="fn-doc-tipo" onchange="document.getElementById('fn-cpf').value=''; document.getElementById('fn-cpf').placeholder=(this.value==='CPF'?'000.000.000-00':'00.000.000/0000-00');" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
+                  <option value="CPF">CPF</option>
+                  <option value="CNPJ">CNPJ</option>
+                </select>
+              </div>
+              <div class="field"><label>Nº do Documento</label><input type="text" id="fn-cpf" placeholder="000.000.000-00" oninput="this.value=maskCnpjCpf(this.value, document.getElementById('fn-doc-tipo').value)"/></div>
+              <div class="field"><label>Data de Nascimento</label><input type="date" id="fn-nascimento" value=""/></div>
+              <div class="field"><label>Telefone</label><input type="text" id="fn-tel" placeholder="(00) 00000-0000" oninput="this.value=maskTelefone(this.value)"/></div>
               <div class="field"><label>E-mail</label><input type="email" id="fn-email" value=""/></div>
+              <div class="field" style="grid-column:1/-1;"><label>Endereço</label><input type="text" id="fn-endereco" value=""/></div>
               <div class="field"><label>Data de Admissão</label><input type="date" id="fn-admissao" value=""/></div>
               <div class="field"><label>Status</label>
                 <select id="fn-status" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
@@ -980,16 +1056,31 @@
                 </select>
               </div>
             </div>
-            <button class="btn-primary" style="width:auto;padding:12px 20px;margin-top:8px;" onclick="salvarFuncionario()">Salvar Funcionário</button>
+            <label style="display:block;font-size:11px;color:var(--chrome-500);margin:14px 0 8px;text-transform:uppercase;letter-spacing:.04em;">Benefícios Oferecidos (marque os aplicáveis)</label>
+            <div id="fn-beneficios" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 16px;">
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="VR"/> VR</label>
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="VA"/> VA</label>
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="VT"/> VT</label>
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Premiação"/> Premiação</label>
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Cesta Básica"/> Cesta Básica</label>
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Plano de Saúde"/> Plano de Saúde</label>
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Plano Odontológico"/> Plano Odontológico</label>
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Seguro de Vida"/> Seguro de Vida</label>
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Auxílio Educação"/> Auxílio Educação</label>
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Banco de Horas"/> Banco de Horas</label>
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Day Off"/> Day Off</label>
+              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Programa Bem-Estar"/> Programa Bem-Estar</label>
+            </div>
+            <button class="btn-primary" style="width:auto;padding:12px 20px;margin-top:14px;" onclick="salvarFuncionario()">Salvar Funcionário</button>
+            <button style="width:auto;padding:12px 20px;margin-top:14px;margin-left:8px;background:transparent;border:1px solid rgba(185,198,205,0.2);color:var(--chrome-300);border-radius:2px;cursor:pointer;" onclick="cancelarEdicaoFuncionario()">Cancelar</button>
+          </div>
+          <div class="panel" id="fn-aniversariantes-panel" style="display:none;">
+            <h2>🎂 Aniversariantes do Mês</h2>
+            <div id="fn-aniversariantes-lista"></div>
           </div>
           <div class="panel"><h2>Funcionários Cadastrados</h2>
             <div style="overflow-x:auto;"><table id="tbl-funcionarios">
-              <tr><th>Nome</th><th>Cargo</th><th>Perfil</th><th>Telefone</th><th>E-mail</th><th>Admissão</th><th>Status</th></tr>
-              <tr><td>Marcos T.</td><td>Diretor / Administrador do Sistema</td><td>Administrador</td><td>(11) 99988-7766</td><td>marcos@acosteomar.com.br</td><td>—</td><td><span class="tag green">Ativo</span></td></tr>
-              <tr><td>Renata S.</td><td>Vendedora</td><td>Vendedor</td><td>(11) 98877-6655</td><td>renata@acosteomar.com.br</td><td>—</td><td><span class="tag green">Ativo</span></td></tr>
-              <tr><td>João P.</td><td>Cortador</td><td>Cortador</td><td>(11) 97766-5544</td><td>joao@acosteomar.com.br</td><td>—</td><td><span class="tag green">Ativo</span></td></tr>
-              <tr><td>Ana Ferreira</td><td>Financeiro</td><td>Financeiro</td><td>(11) 96655-4433</td><td>ana@acosteomar.com.br</td><td>—</td><td><span class="tag green">Ativo</span></td></tr>
-              <tr><td>Camila Duarte</td><td>Analista de RH</td><td>RH</td><td>(11) 95544-3322</td><td>camila@acosteomar.com.br</td><td>—</td><td><span class="tag green">Ativo</span></td></tr>
+              <tr><th>Nome</th><th>Cargo</th><th>Perfil</th><th>Vínculo</th><th>Documento</th><th>Nascimento</th><th>Telefone</th><th>E-mail</th><th>Benefícios</th><th>Admissão</th><th>Status</th><th></th></tr>
             </table></div>
           </div>
         </div>
@@ -1193,6 +1284,11 @@
       erro.style.display = 'block';
       return;
     }
+    if(id && !nome){
+      erro.textContent = 'O nome não pode ficar em branco.';
+      erro.style.display = 'block';
+      return;
+    }
 
     try{
       let resp;
@@ -1201,7 +1297,7 @@
         resp = await fetch(API_BASE+'/api/usuarios/'+id+'/perfil', {
           method:'PUT',
           headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
-          body: JSON.stringify({role, cargo, ativo})
+          body: JSON.stringify({role, cargo, ativo, nome})
         });
       } else {
         resp = await fetch(API_BASE+'/api/usuarios', {
@@ -1490,31 +1586,24 @@
   function popularSelectClientesOrcamento(){
     const sel = document.getElementById('norc-cliente-select');
     if(!sel) return;
-    const linhas = document.querySelectorAll('#tbl-clientes tr');
     let html = '<option value="">— selecionar —</option>';
-    linhas.forEach((tr,i) => {
-      if(tr.children.length < 9 || tr.querySelector('th')) return;
-      const razao = tr.children[0].textContent;
-      html += '<option value="'+i+'">'+razao+'</option>';
-    });
+    CLIENTES.forEach(c => { html += '<option value="'+c.id+'">'+c.razao+'</option>'; });
     sel.innerHTML = html;
   }
   function preencherClienteOrcamento(){
-    const idx = document.getElementById('norc-cliente-select').value;
-    if(idx === '') return;
-    const tr = document.querySelectorAll('#tbl-clientes tr')[idx];
-    if(!tr) return;
-    const c = Array.from(tr.children).map(td => td.textContent);
-    // colunas: Razão Social, Fantasia, CNPJ, Contato, Vendedor, Telefone, WhatsApp, Email, Endereço, Forma, Status
-    document.getElementById('norc-cliente').value = c[0];
-    document.getElementById('norc-fantasia').value = c[1];
-    document.getElementById('norc-cnpj').value = c[2];
-    document.getElementById('norc-contato').value = c[3];
-    document.getElementById('norc-vendedor').value = c[4];
-    document.getElementById('norc-tel').value = c[5];
-    document.getElementById('norc-email').value = c[7];
-    document.getElementById('norc-endereco').value = c[8];
-    document.getElementById('norc-pagamento').value = c[9];
+    const id = document.getElementById('norc-cliente-select').value;
+    if(id === '') return;
+    const c = CLIENTES.find(x => x.id === parseInt(id));
+    if(!c) return;
+    document.getElementById('norc-cliente').value = c.razao;
+    document.getElementById('norc-fantasia').value = c.fantasia;
+    document.getElementById('norc-cnpj').value = c.doc;
+    document.getElementById('norc-contato').value = c.contato;
+    document.getElementById('norc-vendedor').value = c.vendedor;
+    document.getElementById('norc-tel').value = c.tel;
+    document.getElementById('norc-email').value = c.email;
+    document.getElementById('norc-endereco').value = c.endereco;
+    document.getElementById('norc-pagamento').value = c.pagamento;
   }
 
   function gerarNovoOrcamentoPDF(){
@@ -2171,51 +2260,269 @@
     abrirPDF(doc, 'NF-'+numero.replace('/','-')+'.pdf');
   }
 
+  // ================= FUNCIONÁRIOS =================
+  let funcionarioProxId = 6;
+  const FUNCIONARIOS = [
+    {id:1, nome:'Marcos T.', cargo:'Diretor / Administrador do Sistema', perfil:'Administrador', vinculo:'CLT', docTipo:'CPF', doc:'', nascimento:'', tel:'(11) 99988-7766', email:'marcos@acosteomar.com.br', endereco:'', admissao:'', status:'Ativo', beneficios:[]},
+    {id:2, nome:'Renata S.', cargo:'Vendedora', perfil:'Vendedor', vinculo:'CLT', docTipo:'CPF', doc:'', nascimento:'', tel:'(11) 98877-6655', email:'renata@acosteomar.com.br', endereco:'', admissao:'', status:'Ativo', beneficios:[]},
+    {id:3, nome:'João P.', cargo:'Cortador', perfil:'Cortador', vinculo:'CLT', docTipo:'CPF', doc:'', nascimento:'', tel:'(11) 97766-5544', email:'joao@acosteomar.com.br', endereco:'', admissao:'', status:'Ativo', beneficios:[]},
+    {id:4, nome:'Ana Ferreira', cargo:'Financeiro', perfil:'Financeiro', vinculo:'CLT', docTipo:'CPF', doc:'', nascimento:'', tel:'(11) 96655-4433', email:'ana@acosteomar.com.br', endereco:'', admissao:'', status:'Ativo', beneficios:[]},
+    {id:5, nome:'Camila Duarte', cargo:'Analista de RH', perfil:'RH', vinculo:'CLT', docTipo:'CPF', doc:'', nascimento:'', tel:'(11) 95544-3322', email:'camila@acosteomar.com.br', endereco:'', admissao:'', status:'Ativo', beneficios:[]}
+  ];
+
+  function renderFuncionariosTable(){
+    let html = '<tr><th>Nome</th><th>Cargo</th><th>Perfil</th><th>Vínculo</th><th>Documento</th><th>Nascimento</th><th>Telefone</th><th>E-mail</th><th>Benefícios</th><th>Admissão</th><th>Status</th><th></th></tr>';
+    FUNCIONARIOS.forEach(f => {
+      const classe = f.status === 'Ativo' ? 'green' : f.status === 'Afastado' ? 'amber' : 'red';
+      const nascFmt = f.nascimento ? f.nascimento.split('-').reverse().join('/') : '—';
+      const admFmt = f.admissao ? f.admissao.split('-').reverse().join('/') : '—';
+      const benef = (f.beneficios && f.beneficios.length) ? f.beneficios.join(', ') : '—';
+      html += '<tr><td>'+f.nome+'</td><td>'+f.cargo+'</td><td>'+f.perfil+'</td><td>'+(f.vinculo==='PJ'?'PJ/Autônomo':'CLT')+'</td><td>'+(f.doc||'—')+'</td><td>'+nascFmt+'</td><td>'+f.tel+'</td><td>'+f.email+'</td><td>'+benef+'</td><td>'+admFmt+'</td><td><span class="tag '+classe+'">'+f.status+'</span></td><td><button onclick="editarFuncionario('+f.id+')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
+    });
+    document.getElementById('tbl-funcionarios').innerHTML = html;
+    renderAniversariantes();
+  }
+
+  function renderAniversariantes(){
+    const mesAtual = new Date().getMonth();
+    const painel = document.getElementById('fn-aniversariantes-panel');
+    const lista = FUNCIONARIOS.filter(f => f.nascimento && new Date(f.nascimento+'T00:00:00').getMonth() === mesAtual);
+    if(lista.length === 0){ painel.style.display = 'none'; return; }
+    painel.style.display = 'block';
+    document.getElementById('fn-aniversariantes-lista').innerHTML = lista.map(f => {
+      const dia = f.nascimento.split('-')[2];
+      return '<p style="font-size:13px;color:var(--chrome-200);margin:4px 0;">🎉 <strong>'+f.nome+'</strong> — dia '+dia+'</p>';
+    }).join('');
+  }
+
+  function getBeneficiosSelecionados(){
+    return Array.from(document.querySelectorAll('#fn-beneficios input:checked')).map(cb => cb.value);
+  }
+  function marcarBeneficios(lista){
+    document.querySelectorAll('#fn-beneficios input').forEach(cb => cb.checked = (lista||[]).includes(cb.value));
+  }
+
+  function editarFuncionario(id){
+    const f = FUNCIONARIOS.find(x => x.id === id);
+    if(!f) return;
+    document.getElementById('fn-id').value = f.id;
+    document.getElementById('fn-nome').value = f.nome;
+    document.getElementById('fn-cargo').value = f.cargo;
+    document.getElementById('fn-perfil').value = f.perfil;
+    document.getElementById('fn-vinculo').value = f.vinculo;
+    document.getElementById('fn-doc-tipo').value = f.docTipo;
+    document.getElementById('fn-cpf').value = f.doc;
+    document.getElementById('fn-nascimento').value = f.nascimento;
+    document.getElementById('fn-tel').value = f.tel;
+    document.getElementById('fn-email').value = f.email;
+    document.getElementById('fn-endereco').value = f.endereco;
+    document.getElementById('fn-admissao').value = f.admissao;
+    document.getElementById('fn-status').value = f.status;
+    marcarBeneficios(f.beneficios);
+    document.getElementById('fn-form-titulo').textContent = 'Editar Funcionário';
+    document.getElementById('view-funcionarios').scrollIntoView({behavior:'smooth'});
+  }
+
+  function cancelarEdicaoFuncionario(){
+    document.getElementById('fn-id').value = '';
+    ['fn-nome','fn-cargo','fn-cpf','fn-nascimento','fn-tel','fn-email','fn-endereco','fn-admissao'].forEach(id => document.getElementById(id).value = '');
+    marcarBeneficios([]);
+    document.getElementById('fn-form-titulo').textContent = 'Cadastrar Funcionário';
+  }
+
   function salvarFuncionario(){
     const nome = document.getElementById('fn-nome').value.trim();
     if(!nome){ alert('Preencha ao menos o nome completo.'); return; }
-    const cargo = document.getElementById('fn-cargo').value;
-    const perfil = document.getElementById('fn-perfil').value;
-    const cpf = document.getElementById('fn-cpf').value;
-    const tel = document.getElementById('fn-tel').value;
-    const email = document.getElementById('fn-email').value;
-    const admissao = document.getElementById('fn-admissao').value;
-    const status = document.getElementById('fn-status').value;
-    const classe = status === 'Ativo' ? 'green' : status === 'Afastado' ? 'amber' : 'red';
+    const id = document.getElementById('fn-id').value;
+    const dados = {
+      nome,
+      cargo: document.getElementById('fn-cargo').value,
+      perfil: document.getElementById('fn-perfil').value,
+      vinculo: document.getElementById('fn-vinculo').value,
+      docTipo: document.getElementById('fn-doc-tipo').value,
+      doc: document.getElementById('fn-cpf').value,
+      nascimento: document.getElementById('fn-nascimento').value,
+      tel: document.getElementById('fn-tel').value,
+      email: document.getElementById('fn-email').value,
+      endereco: document.getElementById('fn-endereco').value,
+      admissao: document.getElementById('fn-admissao').value,
+      status: document.getElementById('fn-status').value,
+      beneficios: getBeneficiosSelecionados()
+    };
+    if(id){
+      const f = FUNCIONARIOS.find(x => x.id === parseInt(id));
+      Object.assign(f, dados);
+      registrarEdicao('RH — '+nome, 'Editou o cadastro');
+    } else {
+      FUNCIONARIOS.push(Object.assign({id: funcionarioProxId++}, dados));
+      registrarEdicao('RH — '+nome, 'Novo funcionário cadastrado ('+dados.perfil+')');
+    }
+    renderFuncionariosTable();
+    cancelarEdicaoFuncionario();
+  }
 
-    const tbl = document.getElementById('tbl-funcionarios');
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td>'+nome+'</td><td>'+cargo+'</td><td>'+perfil+'</td><td>'+tel+'</td><td>'+email+'</td><td>'+(admissao||'—')+'</td><td><span class="tag '+classe+'">'+status+'</span></td>';
-    tbl.appendChild(tr);
+  // ================= MÁSCARAS =================
+  function maskCnpjCpf(value, tipo){
+    let d = value.replace(/\D/g,'');
+    if(tipo === 'CPF'){
+      d = d.slice(0,11);
+      return d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+    }
+    d = d.slice(0,14);
+    return d.replace(/(\d{2})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1/$2').replace(/(\d{4})(\d{1,2})$/,'$1-$2');
+  }
+  function maskTelefone(value){
+    const d = value.replace(/\D/g,'').slice(0,11);
+    if(d.length <= 10) return d.replace(/(\d{2})(\d)/,'($1) $2').replace(/(\d{4})(\d{1,4})$/,'$1-$2');
+    return d.replace(/(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d{1,4})$/,'$1-$2');
+  }
 
-    registrarEdicao('RH — '+nome, 'Novo funcionário cadastrado ('+perfil+')');
-    ['fn-nome','fn-cargo','fn-cpf','fn-tel','fn-email','fn-admissao'].forEach(id => document.getElementById(id).value = '');
+  // ================= CLIENTES =================
+  let clienteProxId = 4;
+  const CLIENTES = [
+    {id:1, razao:'Metalúrgica Sul Ltda.', fantasia:'Metalúrgica Sul', docTipo:'CNPJ', doc:'12.345.678/0001-90', ie:'123.456.789.012', contato:'Paulo Andrade', vendedor:'Renata S.', tel:'(54) 3221-0098', whats:'(54) 99911-2233', email:'compras@metalsul.com.br', endereco:'Rua das Indústrias, 450 — Caxias do Sul/RS', pagamento:'Boleto 30/60', status:'Ativo'},
+    {id:2, razao:'Construtora Vega Ltda.', fantasia:'Construtora Vega', docTipo:'CNPJ', doc:'98.765.432/0001-10', ie:'987.654.321.000', contato:'Marina Costa', vendedor:'Carlos M.', tel:'(51) 3245-1122', whats:'(51) 99877-6655', email:'compras@vega.com.br', endereco:'Av. Assis Brasil, 2200 — Porto Alegre/RS', pagamento:'À vista', status:'Ativo'},
+    {id:3, razao:'Indústria Reifer S.A.', fantasia:'Reifer', docTipo:'CNPJ', doc:'11.222.333/0001-44', ie:'112.223.330.001', contato:'Diego Fontana', vendedor:'Carlos M.', tel:'(51) 3567-8899', whats:'(51) 98765-4321', email:'financeiro@reifer.com.br', endereco:'Rua XV de Novembro, 88 — Novo Hamburgo/RS', pagamento:'Boleto 30/60/90', status:'Inativo'}
+  ];
+
+  function renderClientesTable(){
+    let html = '<tr><th>Razão Social</th><th>Nome Fantasia</th><th>Documento</th><th>IE</th><th>Contato/Solicitante</th><th>Vendedor</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th>Endereço</th><th>Forma Pagto.</th><th>Status</th><th></th></tr>';
+    CLIENTES.forEach(c => {
+      const classe = c.status === 'Ativo' ? 'green' : 'amber';
+      html += '<tr><td>'+c.razao+'</td><td>'+c.fantasia+'</td><td>'+c.doc+'</td><td>'+(c.ie||'—')+'</td><td>'+c.contato+'</td><td>'+c.vendedor+'</td><td>'+c.tel+'</td><td>'+c.whats+'</td><td>'+c.email+'</td><td>'+c.endereco+'</td><td>'+c.pagamento+'</td><td><span class="tag '+classe+'">'+c.status+'</span></td><td><button onclick="editarCliente('+c.id+')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
+    });
+    document.getElementById('tbl-clientes').innerHTML = html;
+    popularSelectClientesOrcamento();
+  }
+
+  function editarCliente(id){
+    const c = CLIENTES.find(x => x.id === id);
+    if(!c) return;
+    document.getElementById('cl-id').value = c.id;
+    document.getElementById('cl-razao').value = c.razao;
+    document.getElementById('cl-fantasia').value = c.fantasia;
+    document.getElementById('cl-doc-tipo').value = c.docTipo;
+    document.getElementById('cl-cnpj').value = c.doc;
+    document.getElementById('cl-ie').value = c.ie || '';
+    document.getElementById('cl-tel').value = c.tel;
+    document.getElementById('cl-whats').value = c.whats;
+    document.getElementById('cl-email').value = c.email;
+    document.getElementById('cl-endereco').value = c.endereco;
+    document.getElementById('cl-contato').value = c.contato;
+    document.getElementById('cl-vendedor').value = c.vendedor;
+    document.getElementById('cl-pagamento').value = c.pagamento;
+    document.getElementById('cl-status').value = c.status;
+    document.getElementById('cl-form-titulo').textContent = 'Editar Cliente';
+    document.getElementById('view-clientes').scrollIntoView({behavior:'smooth'});
+  }
+
+  function cancelarEdicaoCliente(){
+    document.getElementById('cl-id').value = '';
+    ['cl-razao','cl-fantasia','cl-cnpj','cl-ie','cl-tel','cl-whats','cl-email','cl-endereco','cl-contato'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('cl-form-titulo').textContent = 'Cadastrar Cliente';
   }
 
   function salvarCliente(){
     const razao = document.getElementById('cl-razao').value.trim();
     if(!razao){ alert('Preencha ao menos a Razão Social.'); return; }
-    const fantasia = document.getElementById('cl-fantasia').value;
-    const cnpj = document.getElementById('cl-cnpj').value;
-    const tel = document.getElementById('cl-tel').value;
-    const whats = document.getElementById('cl-whats').value;
-    const email = document.getElementById('cl-email').value;
-    const endereco = document.getElementById('cl-endereco').value;
-    const contato = document.getElementById('cl-contato').value;
-    const vendedor = document.getElementById('cl-vendedor').value;
-    const pagamento = document.getElementById('cl-pagamento').value;
-    const status = document.getElementById('cl-status').value;
-    const classe = status === 'Ativo' ? 'green' : 'amber';
+    const id = document.getElementById('cl-id').value;
+    const dados = {
+      razao,
+      fantasia: document.getElementById('cl-fantasia').value,
+      docTipo: document.getElementById('cl-doc-tipo').value,
+      doc: document.getElementById('cl-cnpj').value,
+      ie: document.getElementById('cl-ie').value,
+      tel: document.getElementById('cl-tel').value,
+      whats: document.getElementById('cl-whats').value,
+      email: document.getElementById('cl-email').value,
+      endereco: document.getElementById('cl-endereco').value,
+      contato: document.getElementById('cl-contato').value,
+      vendedor: document.getElementById('cl-vendedor').value,
+      pagamento: document.getElementById('cl-pagamento').value,
+      status: document.getElementById('cl-status').value
+    };
 
-    const tbl = document.getElementById('tbl-clientes');
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td>'+razao+'</td><td>'+fantasia+'</td><td>'+cnpj+'</td><td>'+contato+'</td><td>'+vendedor+'</td><td>'+tel+'</td><td>'+whats+'</td><td>'+email+'</td><td>'+endereco+'</td><td>'+pagamento+'</td><td><span class="tag '+classe+'">'+status+'</span></td>';
-    tbl.appendChild(tr);
-
-    registrarEdicao('Cliente — '+razao, 'Novo cadastro criado');
-    ['cl-razao','cl-fantasia','cl-cnpj','cl-tel','cl-whats','cl-email','cl-endereco','cl-contato'].forEach(id => document.getElementById(id).value = '');
-    popularSelectClientesOrcamento();
+    if(id){
+      const c = CLIENTES.find(x => x.id === parseInt(id));
+      Object.assign(c, dados);
+      registrarEdicao('Cliente — '+razao, 'Editou o cadastro');
+    } else {
+      CLIENTES.push(Object.assign({id: clienteProxId++}, dados));
+      registrarEdicao('Cliente — '+razao, 'Novo cadastro criado');
+    }
+    renderClientesTable();
+    cancelarEdicaoCliente();
   }
+
+  // ================= FORNECEDORES =================
+  let fornecedorProxId = 3;
+  const FORNECEDORES = [
+    {id:1, razao:'Gerdau Aços Especiais S.A.', fornece:'Barras e Tubos', docTipo:'CNPJ', doc:'92.690.783/0001-09', ie:'090/1234567', vendedor:'Ricardo Tavares', tel:'(51) 3288-4400', whats:'(51) 99123-8877', email:'vendas@gerdau.com.br', endereco:'Av. das Indústrias, 1000 — Sapucaia do Sul/RS', pagamento:'30/60/90'},
+    {id:2, razao:'Usiminas Comercial Ltda.', fornece:'Chapas', docTipo:'CNPJ', doc:'60.894.730/0001-05', ie:'062/3456789', vendedor:'Marcelo Nunes', tel:'(31) 3499-2200', whats:'(31) 98811-3344', email:'comercial@usiminas.com.br', endereco:'Rua Prof. José Vieira de Mendonça, 3011 — Belo Horizonte/MG', pagamento:'28 dias'}
+  ];
+
+  function renderFornecedoresTable(){
+    let html = '<tr><th>Razão Social</th><th>Fornece</th><th>Documento</th><th>IE</th><th>Vendedor (deles)</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th>Endereço</th><th>Condição Pagto.</th><th></th></tr>';
+    FORNECEDORES.forEach(f => {
+      html += '<tr><td>'+f.razao+'</td><td>'+f.fornece+'</td><td>'+f.doc+'</td><td>'+(f.ie||'—')+'</td><td>'+f.vendedor+'</td><td>'+f.tel+'</td><td>'+f.whats+'</td><td>'+f.email+'</td><td>'+f.endereco+'</td><td>'+f.pagamento+'</td><td><button onclick="editarFornecedor('+f.id+')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
+    });
+    document.getElementById('tbl-fornecedores').innerHTML = html;
+  }
+
+  function editarFornecedor(id){
+    const f = FORNECEDORES.find(x => x.id === id);
+    if(!f) return;
+    document.getElementById('forn-id').value = f.id;
+    document.getElementById('forn-razao').value = f.razao;
+    document.getElementById('forn-fornece').value = f.fornece;
+    document.getElementById('forn-doc-tipo').value = f.docTipo;
+    document.getElementById('forn-cnpj').value = f.doc;
+    document.getElementById('forn-ie').value = f.ie || '';
+    document.getElementById('forn-vendedor').value = f.vendedor;
+    document.getElementById('forn-tel').value = f.tel;
+    document.getElementById('forn-whats').value = f.whats;
+    document.getElementById('forn-email').value = f.email;
+    document.getElementById('forn-endereco').value = f.endereco;
+    document.getElementById('forn-pagamento').value = f.pagamento;
+    document.getElementById('forn-form-titulo').textContent = 'Editar Fornecedor';
+    document.getElementById('view-fornecedores').scrollIntoView({behavior:'smooth'});
+  }
+
+  function cancelarEdicaoFornecedor(){
+    document.getElementById('forn-id').value = '';
+    ['forn-razao','forn-fornece','forn-cnpj','forn-ie','forn-vendedor','forn-tel','forn-whats','forn-email','forn-endereco','forn-pagamento'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('forn-form-titulo').textContent = 'Cadastrar Fornecedor';
+  }
+
+  function salvarFornecedor(){
+    const razao = document.getElementById('forn-razao').value.trim();
+    if(!razao){ alert('Preencha ao menos a Razão Social.'); return; }
+    const id = document.getElementById('forn-id').value;
+    const dados = {
+      razao,
+      fornece: document.getElementById('forn-fornece').value,
+      docTipo: document.getElementById('forn-doc-tipo').value,
+      doc: document.getElementById('forn-cnpj').value,
+      ie: document.getElementById('forn-ie').value,
+      vendedor: document.getElementById('forn-vendedor').value,
+      tel: document.getElementById('forn-tel').value,
+      whats: document.getElementById('forn-whats').value,
+      email: document.getElementById('forn-email').value,
+      endereco: document.getElementById('forn-endereco').value,
+      pagamento: document.getElementById('forn-pagamento').value
+    };
+    if(id){
+      const f = FORNECEDORES.find(x => x.id === parseInt(id));
+      Object.assign(f, dados);
+      registrarEdicao('Fornecedor — '+razao, 'Editou o cadastro');
+    } else {
+      FORNECEDORES.push(Object.assign({id: fornecedorProxId++}, dados));
+      registrarEdicao('Fornecedor — '+razao, 'Novo cadastro criado');
+    }
+    renderFornecedoresTable();
+    cancelarEdicaoFornecedor();
+  }
+
 
   function registrarEdicao(local, acao){
     const usuario = usuarioAtual();
@@ -2283,12 +2590,116 @@
     ).join('');
   }
 
-  // ================= ESTOQUE — sincronizado com Materiais =================
-  const ESTOQUE = {
-    'TB-1020': {nome:'Tubo SAE 1020', qtd: 1200, min: 500},
-    'CH-XAD': {nome:'Chapa Xadrez', qtd: 460, min: 300},
-    'BR-RD10': {nome:'Barra Redonda 10mm', qtd: 800, min: 200}
-  };
+  // ================= MATERIAIS / ESTOQUE — sincronizados =================
+  const MATERIAIS = [
+    {cod:'TB-1020', desc:'Tubo SAE 1020', norma:'NBR 6591', medida:'—', preco:8.90, qtd:1200, min:500},
+    {cod:'CH-XAD', desc:'Chapa Xadrez', norma:'NBR 5920', medida:'—', preco:11.40, qtd:460, min:300},
+    {cod:'BR-RD10', desc:'Barra Redonda 10mm', norma:'SAE 1045', medida:'Ø 10 mm', preco:7.60, qtd:800, min:200}
+  ];
+  // ESTOQUE é derivado de MATERIAIS pra manter compatibilidade com o resto do sistema (Frete, PDFs etc.)
+  function getEstoque(){
+    const obj = {};
+    MATERIAIS.forEach(m => obj[m.cod] = {nome:m.desc, qtd:m.qtd, min:m.min});
+    return obj;
+  }
+
+  function cadastrarMaterial(){
+    const erro = document.getElementById('mat-erro');
+    erro.style.display = 'none';
+    const cod = document.getElementById('mat-codigo').value.trim().toUpperCase();
+    const desc = document.getElementById('mat-desc').value.trim();
+    const norma = document.getElementById('mat-norma').value.trim() || '—';
+    const medida = document.getElementById('mat-medida').value.trim() || '—';
+    const preco = parseFloat(document.getElementById('mat-preco').value) || 0;
+    const qtd = parseFloat(document.getElementById('mat-estoque-inicial').value) || 0;
+    const min = parseFloat(document.getElementById('mat-estoque-minimo').value) || 0;
+
+    if(!cod || !desc){
+      erro.textContent = 'Preencha ao menos o código e a descrição/liga.';
+      erro.style.display = 'block';
+      return;
+    }
+    if(MATERIAIS.some(m => m.cod === cod)){
+      erro.textContent = 'Já existe um material com esse código.';
+      erro.style.display = 'block';
+      return;
+    }
+    MATERIAIS.push({cod, desc, norma, medida, preco, qtd, min});
+    document.getElementById('mat-codigo').value = '';
+    document.getElementById('mat-desc').value = '';
+    document.getElementById('mat-norma').value = '';
+    document.getElementById('mat-medida').value = '';
+    document.getElementById('mat-preco').value = '';
+    document.getElementById('mat-estoque-inicial').value = '0';
+    document.getElementById('mat-estoque-minimo').value = '0';
+    renderMateriais();
+    renderEstoque();
+    registrarEdicao('Materiais', 'Cadastrou o material '+desc+' ('+cod+')');
+  }
+
+  function renderMateriais(){
+    let html = '<tr><th>Código</th><th>Descrição</th><th>Norma</th><th>Medida</th><th>Estoque Atual</th><th>Estoque Mín.</th><th>Preço/kg</th></tr>';
+    MATERIAIS.forEach(m => {
+      const baixo = m.qtd < m.min;
+      html += '<tr><td>'+m.cod+'</td><td>'+m.desc+'</td><td>'+m.norma+'</td><td>'+m.medida+'</td><td>'+m.qtd.toLocaleString('pt-BR')+' kg'+(baixo?' <span class="tag amber">Baixo</span>':'')+'</td><td>'+m.min+' kg</td><td>R$ '+m.preco.toFixed(2).replace('.',',')+'</td></tr>';
+    });
+    document.getElementById('tbl-materiais').innerHTML = html;
+    const sel = document.getElementById('mov-material');
+    if(sel){
+      const atual = sel.value;
+      sel.innerHTML = MATERIAIS.map(m => '<option value="'+m.cod+'">'+m.desc+'</option>').join('');
+      if(MATERIAIS.some(m=>m.cod===atual)) sel.value = atual;
+    }
+  }
+
+  function renderEstoque(){
+    const ESTOQUE = getEstoque();
+    document.querySelectorAll('.cell-estoque').forEach(td => {
+      const cod = td.dataset.cod;
+      const item = ESTOQUE[cod];
+      if(!item) return;
+      const baixo = item.qtd < item.min;
+      td.innerHTML = item.qtd.toLocaleString('pt-BR')+' kg'+(baixo?' <span class="tag amber">Baixo</span>':'');
+    });
+    let html = '<tr><th>Código</th><th>Material</th><th>Estoque Atual</th><th>Estoque Mín.</th></tr>';
+    Object.keys(ESTOQUE).forEach(cod => {
+      const it = ESTOQUE[cod];
+      const baixo = it.qtd < it.min;
+      html += '<tr><td>'+cod+'</td><td>'+it.nome+'</td><td>'+it.qtd.toLocaleString('pt-BR')+' kg'+(baixo?' <span class="tag amber">Baixo</span>':' <span class="tag green">OK</span>')+'</td><td>'+it.min+' kg</td></tr>';
+    });
+    document.getElementById('tbl-estoque-atual').innerHTML = html;
+  }
+
+  function adicionarMovimentoHistorico(material, tipo, qtd, origem){
+    const tbl = document.getElementById('tbl-mov-estoque');
+    const tr = document.createElement('tr');
+    const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    const tag = tipo==='entrada' ? '<span class="tag green">Entrada</span>' : '<span class="tag amber">Saída</span>';
+    tr.innerHTML = '<td>'+hoje+'</td><td>'+material+'</td><td>'+tag+'</td><td>'+qtd+' kg</td><td>'+origem+'</td>';
+    tbl.insertBefore(tr, tbl.children[1]);
+  }
+
+  function registrarMovimentacao(){
+    const cod = document.getElementById('mov-material').value;
+    const tipo = document.getElementById('mov-tipo').value;
+    const qtd = parseFloat(document.getElementById('mov-qtd').value) || 0;
+    if(qtd<=0) return;
+    const item = MATERIAIS.find(m => m.cod === cod);
+    if(!item) return;
+    if(tipo==='entrada') item.qtd += qtd; else item.qtd = Math.max(0, item.qtd-qtd);
+    renderEstoque();
+    adicionarMovimentoHistorico(item.desc, tipo, qtd, 'Manual');
+    registrarEdicao('Estoque — '+item.desc, (tipo==='entrada'?'Entrada de ':'Saída de ')+qtd+' kg');
+  }
+
+  function baixaAutomaticaEstoque(cod, qtd, origem){
+    const item = MATERIAIS.find(m => m.cod === cod);
+    if(!item) return;
+    item.qtd = Math.max(0, item.qtd - qtd);
+    renderEstoque();
+    adicionarMovimentoHistorico(item.desc, 'saida', qtd, origem);
+  }
+
   const PEDIDOS_MATERIAL = {
     '2291': {material:'TB-1020', qtd: 1200, desc:'Tubo SAE 1020', medida:'Ø 50,8 x 3,0 mm'},
     '2290': {material:'CH-XAD', qtd: 340, desc:'Chapa Xadrez', medida:'3mm — 1200x3000mm'}
@@ -2342,52 +2753,6 @@
     doc.text('Aços TeoMar · erp.acosteomar.com.br', pageW/2, 293, {align:'center'});
 
     abrirPDF(doc, 'Ordem-Producao-Pedido-'+id+'.pdf');
-  }
-
-  function renderEstoque(){
-    document.querySelectorAll('.cell-estoque').forEach(td => {
-      const cod = td.dataset.cod;
-      const item = ESTOQUE[cod];
-      if(!item) return;
-      const baixo = item.qtd < item.min;
-      td.innerHTML = item.qtd.toLocaleString('pt-BR')+' kg'+(baixo?' <span class="tag amber">Baixo</span>':'');
-    });
-    let html = '<tr><th>Código</th><th>Material</th><th>Estoque Atual</th><th>Estoque Mín.</th></tr>';
-    Object.keys(ESTOQUE).forEach(cod => {
-      const it = ESTOQUE[cod];
-      const baixo = it.qtd < it.min;
-      html += '<tr><td>'+cod+'</td><td>'+it.nome+'</td><td>'+it.qtd.toLocaleString('pt-BR')+' kg'+(baixo?' <span class="tag amber">Baixo</span>':' <span class="tag green">OK</span>')+'</td><td>'+it.min+' kg</td></tr>';
-    });
-    document.getElementById('tbl-estoque-atual').innerHTML = html;
-  }
-
-  function adicionarMovimentoHistorico(material, tipo, qtd, origem){
-    const tbl = document.getElementById('tbl-mov-estoque');
-    const tr = document.createElement('tr');
-    const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-    const tag = tipo==='entrada' ? '<span class="tag green">Entrada</span>' : '<span class="tag amber">Saída</span>';
-    tr.innerHTML = '<td>'+hoje+'</td><td>'+material+'</td><td>'+tag+'</td><td>'+qtd+' kg</td><td>'+origem+'</td>';
-    tbl.insertBefore(tr, tbl.children[1]);
-  }
-
-  function registrarMovimentacao(){
-    const cod = document.getElementById('mov-material').value;
-    const tipo = document.getElementById('mov-tipo').value;
-    const qtd = parseFloat(document.getElementById('mov-qtd').value) || 0;
-    if(qtd<=0) return;
-    const item = ESTOQUE[cod];
-    if(tipo==='entrada') item.qtd += qtd; else item.qtd = Math.max(0, item.qtd-qtd);
-    renderEstoque();
-    adicionarMovimentoHistorico(item.nome, tipo, qtd, 'Manual');
-    registrarEdicao('Estoque — '+item.nome, (tipo==='entrada'?'Entrada de ':'Saída de ')+qtd+' kg');
-  }
-
-  function baixaAutomaticaEstoque(cod, qtd, origem){
-    const item = ESTOQUE[cod];
-    if(!item) return;
-    item.qtd = Math.max(0, item.qtd - qtd);
-    renderEstoque();
-    adicionarMovimentoHistorico(item.nome, 'saida', qtd, origem);
   }
 
   // ================= PDF do Orçamento =================
@@ -2668,6 +3033,10 @@
   }
 
   carregarRelatorio();
+  renderClientesTable();
+  renderFornecedoresTable();
+  renderFuncionariosTable();
+  renderMateriais();
   renderEstoque();
 
   // ================= COMISSÃO E PREMIAÇÃO =================
