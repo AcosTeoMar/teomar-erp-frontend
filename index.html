@@ -1114,6 +1114,14 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
+  // ================= CLIENTES (declarado cedo: usado em inicializações abaixo) =================
+  let clienteProxId = 4;
+  const CLIENTES = [
+    {id:1, razao:'Metalúrgica Sul Ltda.', fantasia:'Metalúrgica Sul', docTipo:'CNPJ', doc:'12.345.678/0001-90', ie:'123.456.789.012', contato:'Paulo Andrade', vendedor:'Renata S.', tel:'(54) 3221-0098', whats:'(54) 99911-2233', email:'compras@metalsul.com.br', endereco:'Rua das Indústrias, 450 — Caxias do Sul/RS', pagamento:'Boleto 30/60', status:'Ativo'},
+    {id:2, razao:'Construtora Vega Ltda.', fantasia:'Construtora Vega', docTipo:'CNPJ', doc:'98.765.432/0001-10', ie:'987.654.321.000', contato:'Marina Costa', vendedor:'Carlos M.', tel:'(51) 3245-1122', whats:'(51) 99877-6655', email:'compras@vega.com.br', endereco:'Av. Assis Brasil, 2200 — Porto Alegre/RS', pagamento:'À vista', status:'Ativo'},
+    {id:3, razao:'Indústria Reifer S.A.', fantasia:'Reifer', docTipo:'CNPJ', doc:'11.222.333/0001-44', ie:'112.223.330.001', contato:'Diego Fontana', vendedor:'Carlos M.', tel:'(51) 3567-8899', whats:'(51) 98765-4321', email:'financeiro@reifer.com.br', endereco:'Rua XV de Novembro, 88 — Novo Hamburgo/RS', pagamento:'Boleto 30/60/90', status:'Inativo'}
+  ];
+
   // ---- Navegação entre módulos ----
   const navItems = document.querySelectorAll('.nav-item');
   const views = document.querySelectorAll('.view');
@@ -2376,14 +2384,6 @@
     if(d.length <= 10) return d.replace(/(\d{2})(\d)/,'($1) $2').replace(/(\d{4})(\d{1,4})$/,'$1-$2');
     return d.replace(/(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d{1,4})$/,'$1-$2');
   }
-
-  // ================= CLIENTES =================
-  let clienteProxId = 4;
-  const CLIENTES = [
-    {id:1, razao:'Metalúrgica Sul Ltda.', fantasia:'Metalúrgica Sul', docTipo:'CNPJ', doc:'12.345.678/0001-90', ie:'123.456.789.012', contato:'Paulo Andrade', vendedor:'Renata S.', tel:'(54) 3221-0098', whats:'(54) 99911-2233', email:'compras@metalsul.com.br', endereco:'Rua das Indústrias, 450 — Caxias do Sul/RS', pagamento:'Boleto 30/60', status:'Ativo'},
-    {id:2, razao:'Construtora Vega Ltda.', fantasia:'Construtora Vega', docTipo:'CNPJ', doc:'98.765.432/0001-10', ie:'987.654.321.000', contato:'Marina Costa', vendedor:'Carlos M.', tel:'(51) 3245-1122', whats:'(51) 99877-6655', email:'compras@vega.com.br', endereco:'Av. Assis Brasil, 2200 — Porto Alegre/RS', pagamento:'À vista', status:'Ativo'},
-    {id:3, razao:'Indústria Reifer S.A.', fantasia:'Reifer', docTipo:'CNPJ', doc:'11.222.333/0001-44', ie:'112.223.330.001', contato:'Diego Fontana', vendedor:'Carlos M.', tel:'(51) 3567-8899', whats:'(51) 98765-4321', email:'financeiro@reifer.com.br', endereco:'Rua XV de Novembro, 88 — Novo Hamburgo/RS', pagamento:'Boleto 30/60/90', status:'Inativo'}
-  ];
 
   function renderClientesTable(){
     let html = '<tr><th>Razão Social</th><th>Nome Fantasia</th><th>Documento</th><th>IE</th><th>Contato/Solicitante</th><th>Vendedor</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th>Endereço</th><th>Forma Pagto.</th><th>Status</th><th></th></tr>';
