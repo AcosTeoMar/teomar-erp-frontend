@@ -266,7 +266,7 @@
         <input type="password" id="login-pass" placeholder="••••••••"/>
       </div>
       <div id="login-erro" style="display:none; color:var(--spark); font-size:11.5px; margin-bottom:10px;">Usuário ou senha inválidos.</div>
-      <button class="btn-primary" onclick="fazerLogin()">Entrar</button>
+      <button class="btn-primary" id="login-btn" onclick="fazerLogin()">Entrar</button>
       <div class="login-foot">
         <a href="#">Esqueci minha senha</a>
         <a href="#">v3.0</a>
@@ -446,11 +446,26 @@
               <div class="field"><label>Telefone</label><input type="text" id="cl-tel" placeholder="(00) 0000-0000" oninput="this.value=maskTelefone(this.value)"/></div>
               <div class="field"><label>WhatsApp</label><input type="text" id="cl-whats" placeholder="(00) 00000-0000" oninput="this.value=maskTelefone(this.value)"/></div>
               <div class="field" style="grid-column:1/-1;"><label>E-mail</label><input type="email" id="cl-email" value=""/></div>
-              <div class="field" style="grid-column:1/-1;"><label>Endereço Completo</label><input type="text" id="cl-endereco" value=""/></div>
+              <div class="field" style="grid-column:1/-1;">
+                <label style="display:block;font-size:11px;color:var(--chrome-500);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">Endereço</label>
+                <div style="display:grid;grid-template-columns:140px 90px 1fr 1fr;gap:10px;margin-bottom:10px;">
+                  <div class="field" style="margin:0;"><label>CEP</label><input type="text" id="cl-cep" placeholder="00000-000" maxlength="9" oninput="this.value=maskCep(this.value)" onblur="buscarCep('cl')"/></div>
+                  <div class="field" style="margin:0;"><label>UF</label><select id="cl-uf" onchange="popularCidadesPorUF('cl')" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;"><option value="">—</option></select></div>
+                  <div class="field" style="margin:0;"><label>Cidade</label><select id="cl-cidade" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;"><option value="">Selecione a UF primeiro</option></select></div>
+                  <div class="field" style="margin:0;"><label>Bairro</label><input type="text" id="cl-bairro" value=""/></div>
+                </div>
+                <div style="display:grid;grid-template-columns:2fr 100px 1fr;gap:10px;margin-bottom:10px;">
+                  <div class="field" style="margin:0;"><label>Rua / Logradouro</label><input type="text" id="cl-rua" value=""/></div>
+                  <div class="field" style="margin:0;"><label>Número</label><input type="text" id="cl-numero" value=""/></div>
+                  <div class="field" style="margin:0;"><label>Complemento</label><input type="text" id="cl-complemento" placeholder="ex: Sala 2, Galpão B" value=""/></div>
+                </div>
+                <div class="field" style="margin:0;"><label>Ponto de Referência</label><input type="text" id="cl-referencia" value=""/></div>
+                <div id="cl-cep-status" style="font-size:11px;color:var(--chrome-500);margin-top:6px;"></div>
+              </div>
               <div class="field"><label>Contato / Solicitante (pessoa no cliente)</label><input type="text" id="cl-contato" value=""/></div>
               <div class="field"><label>Vendedor Responsável (nosso)</label>
                 <select id="cl-vendedor" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
-                  <option>Renata S.</option><option>João P.</option><option>Carlos M.</option><option>Marcos T.</option>
+                  <option>Renata S.</option><option>João P.</option><option>Carlos M.</option><option>Marcos T.</option><option>Raika N.</option>
                 </select>
               </div>
               <div class="field"><label>Forma de Pagamento</label>
@@ -701,7 +716,7 @@
               <div class="field" style="grid-column:1/-1;"><label>E-mail</label><input type="email" id="norc-email" value="compras@metalsul.com.br"/></div>
               <div class="field"><label>Vendedor Responsável</label>
                 <select id="norc-vendedor" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
-                  <option>Renata S.</option><option>Carlos M.</option><option>Marcos T.</option>
+                  <option>Renata S.</option><option>Carlos M.</option><option>Marcos T.</option><option>Raika N.</option>
                 </select>
               </div>
               <div class="field"><label>Proposta Válida por (dias úteis)</label><input type="text" inputmode="numeric" id="norc-validade-dias" value="3"/></div>
@@ -719,7 +734,7 @@
                   <option>Ato/15/30/45/60 DDL</option>
                 </select>
               </div>
-              <div class="field"><label>Condição de Entrega</label><input type="text" id="norc-condicao-entrega" value="Por conta da TeoMar na região atendida (demais regiões, frete a combinar)"/></div>
+              <div class="field"><label>Condição de Entrega</label><input type="text" id="norc-condicao-entrega" value="Entrega por conta da Aços TeoMar Prosperity sendo na Zona Leste de São Paulo. Demais regiões, frete a combinar."/></div>
             </div>
           </div>
 
@@ -729,10 +744,13 @@
               <div>
                 <div class="field"><label>Perfil</label>
                   <select id="norc-shape" onchange="atualizarCamposItemOrcamento()" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
-                    <option value="redonda">Barra Redonda</option>
-                    <option value="quadrada">Barra Quadrada</option>
+                    <option value="redonda">Redondo (Barra Redonda)</option>
+                    <option value="quadrada">Quadrado (Barra Quadrada)</option>
+                    <option value="chata">Chato (Barra Chata)</option>
                     <option value="sextavada">Barra Sextavada</option>
                     <option value="tubo">Tubo Redondo</option>
+                    <option value="tubo_quadrado">Tubo Quadrado</option>
+                    <option value="tubo_chato">Tubo Chato</option>
                     <option value="chapa">Chapa</option>
                   </select>
                 </div>
@@ -895,13 +913,7 @@
         <div class="view" id="view-comissao">
           <div class="panel">
             <h2>Comissão e Premiação</h2>
-            <div class="field" style="max-width:220px;"><label>Mês de Referência</label>
-              <select id="com-mes" onchange="renderComissao()" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
-                <option value="2026-08">Agosto/2026</option>
-                <option value="2026-07">Julho/2026</option>
-                <option value="2026-06">Junho/2026</option>
-              </select>
-            </div>
+            <p style="font-size:11px;color:var(--chrome-500);margin-top:-6px;">Calculada em tempo real a partir dos pedidos da tela <strong>Vendas</strong> (pedidos "Cancelado" não entram na conta). A % de comissão de cada vendedor pode ser ajustada abaixo (somente Admin/RH).</p>
           </div>
           <div id="comissao-cards"></div>
         </div>
@@ -1033,9 +1045,16 @@
                 </select>
               </div>
               <div class="field"><label>Vínculo</label>
-                <select id="fn-vinculo" onchange="document.getElementById('fn-doc-tipo').value = this.value==='CLT' ? 'CPF' : document.getElementById('fn-doc-tipo').value;" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
-                  <option value="CLT">CLT</option>
-                  <option value="PJ">Sem vínculo empregatício (PJ / Autônomo)</option>
+                <select id="fn-vinculo" onchange="document.getElementById('fn-doc-tipo').value = (this.value==='CLT'||this.value==='Estagiário'||this.value==='Aprendiz') ? 'CPF' : document.getElementById('fn-doc-tipo').value;" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;">
+                  <option value="CLT">CLT — colaborador com vínculo empregatício</option>
+                  <option value="PJ">PJ — prestador de serviço pessoa jurídica</option>
+                  <option value="Autônomo">Autônomo — trabalha por conta própria sem vínculo</option>
+                  <option value="Terceirizado">Terceirizado</option>
+                  <option value="Temporário">Temporário</option>
+                  <option value="Estagiário">Estagiário</option>
+                  <option value="Aprendiz">Aprendiz</option>
+                  <option value="Sócio Proprietário">Sócio Proprietário — dono(a) ou sócio(a) da empresa</option>
+                  <option value="Sócio-Administrador">Sócio-Administrador — sócio(a) que administra a empresa</option>
                 </select>
               </div>
               <div class="field"><label>Tipo de Documento</label>
@@ -1057,19 +1076,36 @@
               </div>
             </div>
             <label style="display:block;font-size:11px;color:var(--chrome-500);margin:14px 0 8px;text-transform:uppercase;letter-spacing:.04em;">Benefícios Oferecidos (marque os aplicáveis)</label>
-            <div id="fn-beneficios" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 16px;">
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="VR"/> VR</label>
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="VA"/> VA</label>
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="VT"/> VT</label>
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Premiação"/> Premiação</label>
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Cesta Básica"/> Cesta Básica</label>
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Plano de Saúde"/> Plano de Saúde</label>
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Plano Odontológico"/> Plano Odontológico</label>
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Seguro de Vida"/> Seguro de Vida</label>
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Auxílio Educação"/> Auxílio Educação</label>
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Banco de Horas"/> Banco de Horas</label>
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Day Off"/> Day Off</label>
-              <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Programa Bem-Estar"/> Programa Bem-Estar</label>
+            <div style="display:grid;grid-template-columns:1fr 2fr;gap:16px;">
+              <div style="border:1px solid rgba(185,198,205,0.16);border-radius:4px;padding:12px;">
+                <div style="font-size:10.5px;color:var(--spark);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">Obrigatórios por Lei</div>
+                <div id="fn-beneficios-obrig" style="display:grid;grid-template-columns:1fr;gap:8px;">
+                  <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Hora Extra"/> Hora Extra</label>
+                  <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="13º Salário"/> 13º Salário</label>
+                  <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Férias Remuneradas"/> Férias Remuneradas</label>
+                  <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="FGTS"/> FGTS</label>
+                  <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="VT"/> VT (Vale-Transporte)</label>
+                </div>
+              </div>
+              <div id="fn-beneficios" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 16px;align-content:start;">
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="VR"/> VR</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="VA"/> VA</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Premiação"/> Premiação</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Cesta Básica"/> Cesta Básica</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Cesta de Natal"/> Cesta de Natal</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Plano de Saúde (c/ dependente direto, desconto em folha)"/> Plano de Saúde (c/ dependente, desconto em folha)</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Convênio Odontológico (c/ dependentes)"/> Convênio Odontológico (c/ dependentes)</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Auxílio Creche (filhos até 6 anos)"/> Auxílio Creche (filhos até 6 anos)</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Auxílio Farmácia"/> Auxílio Farmácia</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Seguro de Vida"/> Seguro de Vida</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Auxílio Educação"/> Auxílio Educação</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Vale Combustível"/> Vale Combustível</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Previdência Privada Corporativa"/> Previdência Privada Corporativa</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Auxílio Home Office"/> Auxílio Home Office</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Banco de Horas"/> Banco de Horas</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Day Off"/> Day Off</label>
+                <label style="font-size:13px;color:var(--chrome-200);display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Programa Bem-Estar"/> Programa Bem-Estar</label>
+              </div>
             </div>
             <button class="btn-primary" style="width:auto;padding:12px 20px;margin-top:14px;" onclick="salvarFuncionario()">Salvar Funcionário</button>
             <button style="width:auto;padding:12px 20px;margin-top:14px;margin-left:8px;background:transparent;border:1px solid rgba(185,198,205,0.2);color:var(--chrome-300);border-radius:2px;cursor:pointer;" onclick="cancelarEdicaoFuncionario()">Cancelar</button>
@@ -1169,28 +1205,91 @@
     }
   }
 
-  function fazerLogin(){
+  async function fazerLogin(){
     const u = (document.getElementById('login-user').value || '').trim().toLowerCase().split('@')[0];
     const p = document.getElementById('login-pass').value || '';
-    const user = USERS[u];
     const erro = document.getElementById('login-erro');
-    if(!user || user.senha !== p){
+    const btnLogin = document.getElementById('login-btn');
+    if(btnLogin){ btnLogin.disabled = true; btnLogin.textContent = 'Entrando...'; }
+
+    let dadosUsuario = null; // {nome, role, cargo}
+
+    // 1) tenta autenticar direto no banco de dados real (qualquer usuário cadastrado na tela de Usuários)
+    const okApi = await apiLogin(u, p);
+    apiLoginPromise = Promise.resolve(okApi);
+    if(okApi && API_USER){
+      dadosUsuario = { nome: API_USER.nome, role: API_USER.role, cargo: API_USER.cargo || ROLE_LABELS[API_USER.role] || API_USER.role };
+    } else {
+      // 2) fallback local — só usado se a API estiver fora do ar; mantém os usuários de demonstração funcionando
+      const userLocal = USERS[u];
+      if(userLocal && userLocal.senha === p){
+        dadosUsuario = { nome: userLocal.nome, role: userLocal.role, cargo: userLocal.cargo };
+      }
+    }
+
+    if(btnLogin){ btnLogin.disabled = false; btnLogin.textContent = 'Entrar'; }
+    if(!dadosUsuario){
       erro.style.display = 'block';
       return;
     }
     erro.style.display = 'none';
-    currentRole = user.role;
-    currentUserName = user.nome;
+    currentRole = dadosUsuario.role;
+    currentUserName = dadosUsuario.nome;
     currentLoginKey = u;
-    document.getElementById('topbar-user-label').textContent = user.nome+' · '+user.cargo;
-    aplicarFotoPerfilNoTopbar(user.iniciais);
+    const iniciais = dadosUsuario.nome.split(' ').filter(Boolean).map(s=>s[0]).slice(0,2).join('').toUpperCase();
+    document.getElementById('topbar-user-label').textContent = dadosUsuario.nome+' · '+dadosUsuario.cargo;
+    aplicarFotoPerfilNoTopbar(iniciais);
     document.getElementById('login').classList.add('hidden');
     document.getElementById('dash').classList.add('active');
     document.getElementById('login-user').value = '';
     document.getElementById('login-pass').value = '';
     aplicarVisibilidadePorPerfil();
     if(typeof renderChat === 'function') renderChat();
-    apiLoginPromise = apiLogin(u, p); // tenta autenticar também na API real (usada pela tela de Usuários)
+    carregarEquipeAPI(); // busca a equipe real do banco pra atualizar chat e campos de vendedor (não bloqueia o login se falhar)
+  }
+
+  // ================= EQUIPE REAL (vinda do banco, usada no Chat e nos campos de Vendedor) =================
+  let EQUIPE_API = []; // [{id, nome, login, cargo, role}]
+
+  async function carregarEquipeAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/usuarios/equipe', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      EQUIPE_API = await resp.json();
+      popularVendedoresDinamico();
+      if(typeof renderChatContatos === 'function') renderChatContatos();
+    }catch(e){ /* API fora do ar — mantém as listas fixas locais como estavam */ }
+  }
+
+  function nomesVendedoresDisponiveis(){
+    if(EQUIPE_API.length){
+      return EQUIPE_API.filter(u => u.role === 'vendedor' || u.role === 'admin').map(u => u.nome);
+    }
+    return ['Renata S.','Carlos M.','Marcos T.','Raika N.']; // fallback se a API não respondeu
+  }
+
+  function popularVendedoresDinamico(){
+    const nomes = nomesVendedoresDisponiveis();
+    ['cl-vendedor','norc-vendedor'].forEach(id => {
+      const sel = document.getElementById(id);
+      if(!sel) return;
+      const atual = sel.value;
+      sel.innerHTML = nomes.map(n => '<option>'+n+'</option>').join('');
+      if(nomes.includes(atual)) sel.value = atual;
+    });
+  }
+
+  function getUserInfo(key){
+    if(USERS[key]) return USERS[key];
+    const u = EQUIPE_API.find(x => (x.login||'').toLowerCase() === key);
+    if(u) return { nome: u.nome, cargo: u.cargo || ROLE_LABELS[u.role] || u.role, role: u.role, iniciais: (u.nome||'').split(' ').filter(Boolean).map(s=>s[0]).slice(0,2).join('').toUpperCase() };
+    return { nome:key, cargo:'', role:'', iniciais:'??' };
+  }
+  function todasAsChavesDeUsuarios(){
+    const chaves = new Set(Object.keys(USERS));
+    EQUIPE_API.forEach(u => { if(u.login) chaves.add(u.login.toLowerCase()); });
+    return Array.from(chaves);
   }
 
   function fazerLogout(){
@@ -1498,10 +1597,16 @@
       wrap.innerHTML = fieldHTML('norc-d','Diâmetro (mm)','20');
     } else if(shape === 'quadrada'){
       wrap.innerHTML = fieldHTML('norc-l','Lado (mm)','40');
+    } else if(shape === 'chata'){
+      wrap.innerHTML = fieldHTML('norc-larg-chata','Largura (mm)','50') + fieldHTML('norc-esp-chata','Espessura (mm)','6');
     } else if(shape === 'sextavada'){
       wrap.innerHTML = fieldHTML('norc-af','Distância entre Faces (mm)','40');
     } else if(shape === 'tubo'){
       wrap.innerHTML = fieldHTML('norc-od','Diâmetro Externo (mm)','50') + fieldHTML('norc-e','Espessura da Parede (mm)','3');
+    } else if(shape === 'tubo_quadrado'){
+      wrap.innerHTML = fieldHTML('norc-lq','Lado (mm)','50') + fieldHTML('norc-eq','Espessura da Parede (mm)','3');
+    } else if(shape === 'tubo_chato'){
+      wrap.innerHTML = fieldHTML('norc-largtc','Largura (mm)','60') + fieldHTML('norc-alttc','Altura (mm)','30') + fieldHTML('norc-etc','Espessura da Parede (mm)','3');
     } else if(shape === 'chapa'){
       wrap.innerHTML = fieldHTML('norc-esp','Espessura (mm)','3') + fieldHTML('norc-larg','Largura (mm)','1200') + fieldHTML('norc-compr','Comprimento (mm)','3000');
       lenLabel.textContent = 'Comprimento (m) — não usado para chapa';
@@ -1517,6 +1622,10 @@
     } else if(shape === 'quadrada'){
       const l = parseFloat(document.getElementById('norc-l').value) || 0;
       return l*l*0.00785;
+    } else if(shape === 'chata'){
+      const larg = parseFloat(document.getElementById('norc-larg-chata').value) || 0;
+      const esp = parseFloat(document.getElementById('norc-esp-chata').value) || 0;
+      return larg*esp*0.00785;
     } else if(shape === 'sextavada'){
       const af = parseFloat(document.getElementById('norc-af').value) || 0;
       return af*af*0.006798;
@@ -1524,6 +1633,15 @@
       const od = parseFloat(document.getElementById('norc-od').value) || 0;
       const e = parseFloat(document.getElementById('norc-e').value) || 0;
       return (od-e)*e*0.02466;
+    } else if(shape === 'tubo_quadrado'){
+      const l = parseFloat(document.getElementById('norc-lq').value) || 0;
+      const e = parseFloat(document.getElementById('norc-eq').value) || 0;
+      return 4*(l-e)*e*0.00785;
+    } else if(shape === 'tubo_chato'){
+      const larg = parseFloat(document.getElementById('norc-largtc').value) || 0;
+      const alt = parseFloat(document.getElementById('norc-alttc').value) || 0;
+      const e = parseFloat(document.getElementById('norc-etc').value) || 0;
+      return 2*(larg+alt-2*e)*e*0.00785;
     }
     return 0;
   }
@@ -1554,8 +1672,11 @@
     const v = id => parseFloat(document.getElementById(id).value)||0;
     if(shape === 'redonda') return 'Ø '+v('norc-d')+'mm x '+(v('norc-len')*1000).toFixed(0)+'mm';
     if(shape === 'quadrada') return v('norc-l')+'mm x '+v('norc-l')+'mm x '+(v('norc-len')*1000).toFixed(0)+'mm';
+    if(shape === 'chata') return v('norc-larg-chata')+'mm x '+v('norc-esp-chata')+'mm x '+(v('norc-len')*1000).toFixed(0)+'mm';
     if(shape === 'sextavada') return v('norc-af')+'mm (E/F) x '+(v('norc-len')*1000).toFixed(0)+'mm';
     if(shape === 'tubo') return 'Ø'+v('norc-od')+' x '+v('norc-e')+'mm x '+(v('norc-len')*1000).toFixed(0)+'mm';
+    if(shape === 'tubo_quadrado') return v('norc-lq')+'mm x '+v('norc-lq')+'mm x '+v('norc-eq')+'mm x '+(v('norc-len')*1000).toFixed(0)+'mm';
+    if(shape === 'tubo_chato') return v('norc-largtc')+'mm x '+v('norc-alttc')+'mm x '+v('norc-etc')+'mm x '+(v('norc-len')*1000).toFixed(0)+'mm';
     if(shape === 'chapa') return v('norc-esp')+'mm x '+v('norc-larg')+'mm x '+v('norc-compr')+'mm';
     return '—';
   }
@@ -1606,11 +1727,12 @@
     document.getElementById('norc-cliente').value = c.razao;
     document.getElementById('norc-fantasia').value = c.fantasia;
     document.getElementById('norc-cnpj').value = c.doc;
+    document.getElementById('norc-ie').value = c.ie || '';
     document.getElementById('norc-contato').value = c.contato;
     document.getElementById('norc-vendedor').value = c.vendedor;
     document.getElementById('norc-tel').value = c.tel;
     document.getElementById('norc-email').value = c.email;
-    document.getElementById('norc-endereco').value = c.endereco;
+    document.getElementById('norc-endereco').value = montarEnderecoTexto(c);
     document.getElementById('norc-pagamento').value = c.pagamento;
   }
 
@@ -1620,7 +1742,7 @@
     const doc = new jsPDF({unit:'mm', format:'a4'});
     const pageW = 210;
     const petrol=[10,22,32], chrome=[110,125,133], dark=[20,20,20], spark=[210,80,30];
-    const numero = document.getElementById('cq-numero') ? 'ORC-'+Math.floor(200+Math.random()*900) : 'ORC-'+Math.floor(200+Math.random()*900);
+    const numero = 'ORC-'+String(orcamentoProxNumero).padStart(4,'0');
     const hoje = new Date();
     const dataStr = hoje.toLocaleDateString('pt-BR');
 
@@ -1643,7 +1765,7 @@
 
     // ---- Bloco Cliente ----
     let y = 38;
-    doc.setDrawColor(...chrome); doc.rect(10,33,pageW-20,42);
+    doc.setDrawColor(...chrome); doc.rect(10,33,pageW-20,48);
     function campoCliente(label, valor, x, largura){
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...dark);
       doc.text(label, x, y);
@@ -1669,13 +1791,14 @@
     campoCliente('Vendedor:', document.getElementById('norc-vendedor').value, 12, 80);
 
     // ---- Tabela de Itens ----
-    y = 82;
+    const yTopoTabela = 88;
+    y = yTopoTabela;
     doc.setDrawColor(...chrome);
-    const colX = [12, 26, 44, 100, 148, 172, 196];
+    const colX = [12, 24, 40, 98, 145, 167, 200];
     doc.setFillColor(...petrol); doc.rect(10,y-5,pageW-20,7,'F');
     doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(7.8);
     doc.text('Itens', colX[0], y); doc.text('Quant.', colX[1], y); doc.text('Descrição dos Materiais', colX[2], y);
-    doc.text('Medidas', colX[3], y); doc.text('Valor pç.', colX[4], y); doc.text('Total', colX[5], y); doc.text('Entrega', colX[6], y);
+    doc.text('Medidas', colX[3], y); doc.text('Valor pç.', colX[4], y); doc.text('Total', colX[5], y); doc.text('Entrega', colX[6], y, {align:'right'});
     y += 6;
     doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...dark);
     let totalGeral = 0;
@@ -1688,13 +1811,13 @@
       doc.text(it.medida, colX[3], y);
       doc.text('R$'+it.valorPc.toFixed(2), colX[4], y);
       doc.text('R$'+it.total.toFixed(2), colX[5], y);
-      doc.text(it.entrega, colX[6], y);
+      doc.text(it.entrega, colX[6], y, {align:'right'});
       totalGeral += it.total;
       y += 6.5;
     });
     // moldura da caixa de itens (altura mínima fixa, como na referência)
     const yFimTabela = Math.max(yInicioItens + alturaMinTabela, y + 4);
-    doc.setDrawColor(20,20,20); doc.rect(10, 77, pageW-20, yFimTabela-77);
+    doc.setDrawColor(20,20,20); doc.rect(10, yTopoTabela-5, pageW-20, yFimTabela-(yTopoTabela-5));
 
     // ---- Totais ----
     let yt = yFimTabela + 2;
@@ -1716,14 +1839,15 @@
 
     // ---- OBS / Forma de Pagto / Entrega ----
     doc.setFont('helvetica','normal'); doc.setFontSize(7.6); doc.setTextColor(40,40,40);
-    doc.text('OBS: prazo de entrega informado é para região atendida com nosso veículo — demais regiões, prazo e frete a combinar.', 12, yt); yt += 4.3;
+    doc.text(doc.splitTextToSize('OBS: prazo de entrega informado é para região atendida com nosso veículo — demais regiões, prazo e frete a combinar.', pageW-24), 12, yt); yt += 4.3;
     doc.setFont('helvetica','bold'); doc.setTextColor(...spark);
     doc.text('Forma de Pagto: ', 12, yt);
     doc.setFont('helvetica','normal'); doc.setTextColor(...spark);
     doc.text(document.getElementById('norc-pagamento').value, 32, yt); yt += 4.3;
     doc.setFont('helvetica','bold'); doc.setTextColor(...dark); doc.text('Entrega: ', 12, yt);
     doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
-    doc.text(doc.splitTextToSize(document.getElementById('norc-condicao-entrega').value, pageW-30), 25, yt); yt += 8;
+    const linhasEntrega = doc.splitTextToSize(document.getElementById('norc-condicao-entrega').value, pageW-35);
+    doc.text(linhasEntrega, 25, yt); yt += 4.3*linhasEntrega.length + 4;
 
     doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...dark);
     doc.text('Recebido por: ____________________', 12, yt);
@@ -1743,9 +1867,53 @@
       +'Materiais chatos cortados a frio podem ser laminados ou forjados — verifique restrição de uso de material laminado para sua aplicação antes '
       +'de confirmar o pedido. Em caso de dúvida, procure nosso departamento técnico. Os materiais aqui ofertados seguem o padrão de tolerância '
       +'conforme normas ABNT NBR. Condições de tolerâncias diferenciadas devem ser tratadas no momento da cotação.';
-    doc.text(doc.splitTextToSize(atencao, pageW-24), 26, yt);
+    doc.text(doc.splitTextToSize(atencao, pageW-36), 26, yt);
 
     abrirPDF(doc, 'Orcamento-'+numero+'.pdf');
+    registrarOrcamentoEmitido(numero, document.getElementById('norc-cliente').value, document.getElementById('norc-validade-dias').value, document.getElementById('norc-vendedor').value, totalGeral);
+    orcamentoProxNumero++;
+  }
+
+  // ================= REGISTRO AUTOMÁTICO EM "ORÇAMENTOS EMITIDOS" =================
+  let orcamentoProxNumero = 1;
+  function registrarOrcamentoEmitido(numero, cliente, diasValidade, vendedor, valorTotal){
+    const tbl = document.getElementById('tbl-orcamentos');
+    if(!tbl) return;
+    const idBase = numero.replace('ORC-','');
+    const hoje = new Date();
+    const validadeData = new Date(hoje.getTime() + (parseInt(diasValidade)||3)*24*60*60*1000);
+    const validadeStr = validadeData.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    const tr = document.createElement('tr');
+    tr.dataset.id = idBase; tr.dataset.vendedor = vendedor || ''; tr.dataset.valor = valorTotal || 0;
+    tr.innerHTML = '<td>'+numero+'</td><td>'+cliente+'</td><td>'+validadeStr+'</td>'
+      +'<td class="cell-status"><select class="status-sel" data-kind="orcamento" data-prev="Enviado" onchange="handleStatusChangeOrcamento(this)">'
+      +'<option value="Enviado" selected>Enviado</option><option value="Aprovado (Gerar Venda)">Aprovado (Gerar Venda)</option><option value="Recusado/Cancelado">Recusado/Cancelado</option></select></td>'
+      +'<td class="cell-audit">—</td><td><button class="icon-btn" onclick="alert(\'Reabra a tela de Orçamentos e gere o PDF novamente se precisar de uma nova via.\')">⬇ PDF</button></td>';
+    tbl.appendChild(tr);
+  }
+  function handleStatusChangeOrcamento(sel){
+    handleStatusChange(sel);
+    const tr = sel.closest('tr');
+    const novoStatus = sel.value;
+    if(novoStatus === 'Aprovado (Gerar Venda)'){
+      const tblPedidos = document.getElementById('tbl-pedidos');
+      if(tblPedidos){
+        const cliente = tr.children[1].textContent;
+        const novoId = tr.dataset.id;
+        const vendedor = tr.dataset.vendedor || '—';
+        const valorNum = parseFloat(tr.dataset.valor) || 0;
+        const valorFmt = 'R$ '+valorNum.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
+        const trPedido = document.createElement('tr');
+        trPedido.dataset.id = novoId; trPedido.dataset.vendedor = vendedor; trPedido.dataset.valor = valorNum;
+        trPedido.innerHTML = '<td>#'+novoId+'</td><td>'+cliente+'</td><td>'+vendedor+'</td>'
+          +'<td class="cell-status"><select class="status-sel" data-kind="pedido" data-prev="Em produção" onchange="handleStatusChange(this)">'
+          +'<option value="Em produção" selected>Em produção</option><option value="Faturado">Faturado</option><option value="Aguard. pagto">Aguard. pagto</option><option value="Cancelado">Cancelado</option></select></td>'
+          +'<td class="cell-valor valor-restrito">'+valorFmt+'</td><td>—</td><td>—</td><td class="cell-audit">—</td>'
+          +'<td><button class="icon-btn" onclick="try{gerarPedidoProducaoPDF(this)}catch(e){alert(\'Erro ao gerar PDF: \'+e.message)}">⬇ PDF Produção</button></td>';
+        tblPedidos.appendChild(trPedido);
+        alert('Orçamento aprovado! O pedido #'+novoId+' foi criado em Vendas para seguir para produção/expedição.');
+      }
+    }
   }
   atualizarCamposItemOrcamento();
   popularSelectClientesOrcamento();
@@ -2078,9 +2246,9 @@
     const wrap = document.getElementById('chat-contatos');
     if(!wrap) return;
     let html = '';
-    Object.keys(USERS).forEach(key => {
+    todasAsChavesDeUsuarios().forEach(key => {
       if(key === currentLoginKey) return;
-      const u = USERS[key];
+      const u = getUserInfo(key);
       const k = chatKey(currentLoginKey, key);
       const msgs = CHAT_MESSAGES[k] || [];
       const ultima = msgs[msgs.length-1];
@@ -2105,7 +2273,7 @@
     const header = document.getElementById('chat-header');
     const wrap = document.getElementById('chat-mensagens');
     if(!activeChatUser){ header.textContent = 'Selecione uma conversa'; wrap.innerHTML = ''; return; }
-    header.textContent = USERS[activeChatUser].nome+' — '+USERS[activeChatUser].cargo;
+    header.textContent = getUserInfo(activeChatUser).nome+' — '+getUserInfo(activeChatUser).cargo;
     const k = chatKey(currentLoginKey, activeChatUser);
     const msgs = CHAT_MESSAGES[k] || [];
     let html = '';
@@ -2285,7 +2453,7 @@
       const nascFmt = f.nascimento ? f.nascimento.split('-').reverse().join('/') : '—';
       const admFmt = f.admissao ? f.admissao.split('-').reverse().join('/') : '—';
       const benef = (f.beneficios && f.beneficios.length) ? f.beneficios.join(', ') : '—';
-      html += '<tr><td>'+f.nome+'</td><td>'+f.cargo+'</td><td>'+f.perfil+'</td><td>'+(f.vinculo==='PJ'?'PJ/Autônomo':'CLT')+'</td><td>'+(f.doc||'—')+'</td><td>'+nascFmt+'</td><td>'+f.tel+'</td><td>'+f.email+'</td><td>'+benef+'</td><td>'+admFmt+'</td><td><span class="tag '+classe+'">'+f.status+'</span></td><td><button onclick="editarFuncionario('+f.id+')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
+      html += '<tr><td>'+f.nome+'</td><td>'+f.cargo+'</td><td>'+f.perfil+'</td><td>'+(f.vinculo||'CLT')+'</td><td>'+(f.doc||'—')+'</td><td>'+nascFmt+'</td><td>'+f.tel+'</td><td>'+f.email+'</td><td>'+benef+'</td><td>'+admFmt+'</td><td><span class="tag '+classe+'">'+f.status+'</span></td><td><button onclick="editarFuncionario('+f.id+')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
     });
     document.getElementById('tbl-funcionarios').innerHTML = html;
     renderAniversariantes();
@@ -2304,10 +2472,10 @@
   }
 
   function getBeneficiosSelecionados(){
-    return Array.from(document.querySelectorAll('#fn-beneficios input:checked')).map(cb => cb.value);
+    return Array.from(document.querySelectorAll('#fn-beneficios input:checked, #fn-beneficios-obrig input:checked')).map(cb => cb.value);
   }
   function marcarBeneficios(lista){
-    document.querySelectorAll('#fn-beneficios input').forEach(cb => cb.checked = (lista||[]).includes(cb.value));
+    document.querySelectorAll('#fn-beneficios input, #fn-beneficios-obrig input').forEach(cb => cb.checked = (lista||[]).includes(cb.value));
   }
 
   function editarFuncionario(id){
@@ -2385,17 +2553,94 @@
     return d.replace(/(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d{1,4})$/,'$1-$2');
   }
 
+  // ================= ENDEREÇO — CEP (ViaCEP) + Estado/Cidade (IBGE) =================
+  function maskCep(value){
+    const d = value.replace(/\D/g,'').slice(0,8);
+    return d.replace(/(\d{5})(\d{1,3})$/,'$1-$2');
+  }
+  const ESTADOS_BR = [
+    ['AC','Acre'],['AL','Alagoas'],['AP','Amapá'],['AM','Amazonas'],['BA','Bahia'],['CE','Ceará'],
+    ['DF','Distrito Federal'],['ES','Espírito Santo'],['GO','Goiás'],['MA','Maranhão'],['MT','Mato Grosso'],
+    ['MS','Mato Grosso do Sul'],['MG','Minas Gerais'],['PA','Pará'],['PB','Paraíba'],['PR','Paraná'],
+    ['PE','Pernambuco'],['PI','Piauí'],['RJ','Rio de Janeiro'],['RN','Rio Grande do Norte'],
+    ['RS','Rio Grande do Sul'],['RO','Rondônia'],['RR','Roraima'],['SC','Santa Catarina'],
+    ['SP','São Paulo'],['SE','Sergipe'],['TO','Tocantins']
+  ];
+  function popularEstados(prefix){
+    const sel = document.getElementById(prefix+'-uf');
+    if(!sel || sel.options.length > 1) return; // já populado
+    ESTADOS_BR.forEach(([sigla,nome]) => {
+      const opt = document.createElement('option');
+      opt.value = sigla; opt.textContent = sigla+' — '+nome;
+      sel.appendChild(opt);
+    });
+  }
+  async function popularCidadesPorUF(prefix, cidadeSelecionar){
+    const uf = document.getElementById(prefix+'-uf').value;
+    const selCidade = document.getElementById(prefix+'-cidade');
+    if(!uf){ selCidade.innerHTML = '<option value="">Selecione a UF primeiro</option>'; return; }
+    selCidade.innerHTML = '<option value="">Carregando cidades...</option>';
+    try{
+      const resp = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/'+uf+'/municipios');
+      const cidades = await resp.json();
+      selCidade.innerHTML = '<option value="">Selecione a cidade</option>' + cidades.map(c => '<option value="'+c.nome+'">'+c.nome+'</option>').join('');
+      if(cidadeSelecionar){
+        const existe = cidades.some(c => c.nome.toLowerCase() === cidadeSelecionar.toLowerCase());
+        if(!existe){ const opt = document.createElement('option'); opt.value = cidadeSelecionar; opt.textContent = cidadeSelecionar; selCidade.appendChild(opt); }
+        selCidade.value = cidadeSelecionar;
+      }
+    }catch(e){
+      selCidade.innerHTML = '<option value="">Não foi possível carregar as cidades — digite manualmente</option>';
+    }
+  }
+  async function buscarCep(prefix){
+    const cepInput = document.getElementById(prefix+'-cep');
+    const status = document.getElementById(prefix+'-cep-status');
+    const cep = cepInput.value.replace(/\D/g,'');
+    if(cep.length !== 8){
+      if(cep.length > 0 && status) status.textContent = 'CEP inválido — deve ter 8 dígitos.';
+      return;
+    }
+    if(status){ status.textContent = 'Buscando endereço...'; status.style.color = 'var(--chrome-500)'; }
+    try{
+      const resp = await fetch('https://viacep.com.br/ws/'+cep+'/json/');
+      const data = await resp.json();
+      if(data.erro){
+        if(status){ status.textContent = 'CEP não encontrado — preencha o endereço manualmente.'; status.style.color = 'var(--spark)'; }
+        return;
+      }
+      document.getElementById(prefix+'-uf').value = data.uf;
+      await popularCidadesPorUF(prefix, data.localidade);
+      document.getElementById(prefix+'-bairro').value = data.bairro || '';
+      document.getElementById(prefix+'-rua').value = data.logradouro || '';
+      if(status){ status.textContent = 'Endereço preenchido automaticamente pelo CEP. Confira e complete o número.'; status.style.color = 'var(--chrome-500)'; }
+    }catch(e){
+      if(status){ status.textContent = 'Não foi possível consultar o CEP agora — preencha manualmente.'; status.style.color = 'var(--spark)'; }
+    }
+  }
+  function montarEnderecoTexto(c){
+    if(!c) return '—';
+    const partes = [];
+    if(c.rua) partes.push(c.rua + (c.numero ? ', nº '+c.numero : ''));
+    if(c.complemento) partes.push(c.complemento);
+    if(c.bairro) partes.push(c.bairro);
+    if(c.cidade || c.uf) partes.push([c.cidade,c.uf].filter(Boolean).join('/'));
+    if(c.cep) partes.push('CEP: '+c.cep);
+    if(c.referencia) partes.push('Ref.: '+c.referencia);
+    return partes.length ? partes.join(' — ') : (c.endereco || '—');
+  }
+
   function renderClientesTable(){
     let html = '<tr><th>Razão Social</th><th>Nome Fantasia</th><th>Documento</th><th>IE</th><th>Contato/Solicitante</th><th>Vendedor</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th>Endereço</th><th>Forma Pagto.</th><th>Status</th><th></th></tr>';
     CLIENTES.forEach(c => {
       const classe = c.status === 'Ativo' ? 'green' : 'amber';
-      html += '<tr><td>'+c.razao+'</td><td>'+c.fantasia+'</td><td>'+c.doc+'</td><td>'+(c.ie||'—')+'</td><td>'+c.contato+'</td><td>'+c.vendedor+'</td><td>'+c.tel+'</td><td>'+c.whats+'</td><td>'+c.email+'</td><td>'+c.endereco+'</td><td>'+c.pagamento+'</td><td><span class="tag '+classe+'">'+c.status+'</span></td><td><button onclick="editarCliente('+c.id+')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
+      html += '<tr><td>'+c.razao+'</td><td>'+c.fantasia+'</td><td>'+c.doc+'</td><td>'+(c.ie||'—')+'</td><td>'+c.contato+'</td><td>'+c.vendedor+'</td><td>'+c.tel+'</td><td>'+c.whats+'</td><td>'+c.email+'</td><td>'+montarEnderecoTexto(c)+'</td><td>'+c.pagamento+'</td><td><span class="tag '+classe+'">'+c.status+'</span></td><td><button onclick="editarCliente('+c.id+')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
     });
     document.getElementById('tbl-clientes').innerHTML = html;
     popularSelectClientesOrcamento();
   }
 
-  function editarCliente(id){
+  async function editarCliente(id){
     const c = CLIENTES.find(x => x.id === id);
     if(!c) return;
     document.getElementById('cl-id').value = c.id;
@@ -2407,7 +2652,15 @@
     document.getElementById('cl-tel').value = c.tel;
     document.getElementById('cl-whats').value = c.whats;
     document.getElementById('cl-email').value = c.email;
-    document.getElementById('cl-endereco').value = c.endereco;
+    document.getElementById('cl-cep').value = c.cep || '';
+    document.getElementById('cl-uf').value = c.uf || '';
+    document.getElementById('cl-bairro').value = c.bairro || '';
+    document.getElementById('cl-rua').value = c.rua || '';
+    document.getElementById('cl-numero').value = c.numero || '';
+    document.getElementById('cl-complemento').value = c.complemento || '';
+    document.getElementById('cl-referencia').value = c.referencia || '';
+    document.getElementById('cl-cep-status').textContent = '';
+    if(c.uf) await popularCidadesPorUF('cl', c.cidade); else document.getElementById('cl-cidade').innerHTML = '<option value="">Selecione a UF primeiro</option>';
     document.getElementById('cl-contato').value = c.contato;
     document.getElementById('cl-vendedor').value = c.vendedor;
     document.getElementById('cl-pagamento').value = c.pagamento;
@@ -2418,7 +2671,10 @@
 
   function cancelarEdicaoCliente(){
     document.getElementById('cl-id').value = '';
-    ['cl-razao','cl-fantasia','cl-cnpj','cl-ie','cl-tel','cl-whats','cl-email','cl-endereco','cl-contato'].forEach(id => document.getElementById(id).value = '');
+    ['cl-razao','cl-fantasia','cl-cnpj','cl-ie','cl-tel','cl-whats','cl-email','cl-cep','cl-bairro','cl-rua','cl-numero','cl-complemento','cl-referencia','cl-contato'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('cl-uf').value = '';
+    document.getElementById('cl-cidade').innerHTML = '<option value="">Selecione a UF primeiro</option>';
+    document.getElementById('cl-cep-status').textContent = '';
     document.getElementById('cl-form-titulo').textContent = 'Cadastrar Cliente';
   }
 
@@ -2435,7 +2691,14 @@
       tel: document.getElementById('cl-tel').value,
       whats: document.getElementById('cl-whats').value,
       email: document.getElementById('cl-email').value,
-      endereco: document.getElementById('cl-endereco').value,
+      cep: document.getElementById('cl-cep').value,
+      uf: document.getElementById('cl-uf').value,
+      cidade: document.getElementById('cl-cidade').value,
+      bairro: document.getElementById('cl-bairro').value,
+      rua: document.getElementById('cl-rua').value,
+      numero: document.getElementById('cl-numero').value,
+      complemento: document.getElementById('cl-complemento').value,
+      referencia: document.getElementById('cl-referencia').value,
       contato: document.getElementById('cl-contato').value,
       vendedor: document.getElementById('cl-vendedor').value,
       pagamento: document.getElementById('cl-pagamento').value,
@@ -3033,47 +3296,77 @@
   }
 
   carregarRelatorio();
+  popularEstados('cl');
   renderClientesTable();
   renderFornecedoresTable();
   renderFuncionariosTable();
   renderMateriais();
   renderEstoque();
 
-  // ================= COMISSÃO E PREMIAÇÃO =================
-  const COMISSAO_PCT = 3; // % padrão
+  // ================= COMISSÃO E PREMIAÇÃO (calculada a partir dos pedidos reais de Vendas) =================
+  const COMISSAO_PCT_PADRAO = 3; // % padrão se o vendedor ainda não tiver uma % configurada
   const META_VENDEDOR = 150000; // meta mensal para premiação
   const BONUS_PCT_META = 1; // % extra se bater a meta
+  let COMISSAO_CONFIG = {}; // {'Renata S.': 3.5, ...} — configurado pelo Admin/RH, vale para a sessão atual
+
+  function calcularVendasPorVendedor(){
+    const tbl = document.getElementById('tbl-pedidos');
+    const totais = {};
+    if(!tbl) return totais;
+    Array.from(tbl.querySelectorAll('tr')).forEach(tr => {
+      if(!tr.dataset || !tr.dataset.vendedor) return; // pula o cabeçalho
+      const selStatus = tr.querySelector('select.status-sel');
+      if(selStatus && selStatus.value === 'Cancelado') return;
+      const vendedor = tr.dataset.vendedor;
+      if(!vendedor) return;
+      const celValor = tr.querySelector('.cell-valor');
+      const valor = celValor ? parseFloat(celValor.textContent.replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.')) || 0 : 0;
+      totais[vendedor] = (totais[vendedor]||0) + valor;
+    });
+    return totais;
+  }
+
+  function atualizarPctComissao(nome, valor){
+    const pct = parseFloat(valor);
+    COMISSAO_CONFIG[nome] = isNaN(pct) ? COMISSAO_PCT_PADRAO : pct;
+    renderComissao();
+  }
 
   function renderComissao(){
-    const selMes = document.getElementById('com-mes');
-    if(!selMes) return;
-    const mes = selMes.value;
-    const dados = RELATORIOS[mes];
-    if(!dados) return;
     const wrap = document.getElementById('comissao-cards');
-    let vendedores = dados.vendedores;
+    if(!wrap) return;
+    const totais = calcularVendasPorVendedor();
+    let nomes = Object.keys(totais);
+    // garante que todo vendedor cadastrado apareça mesmo com R$ 0 vendido
+    nomesVendedoresDisponiveis().forEach(n => { if(!(n in totais)) totais[n] = 0; });
+    nomes = Object.keys(totais);
+    const podeEditarPct = (currentRole === 'admin' || currentRole === 'rh');
     if(currentRole === 'vendedor'){
-      vendedores = vendedores.filter(v => v.nome === currentUserName);
-      if(vendedores.length === 0){
-        wrap.innerHTML = '<div class="panel">Nenhuma venda registrada para você em '+mesLabel(mes)+'.</div>';
-        return;
-      }
+      nomes = nomes.filter(n => n === currentUserName);
+      if(nomes.length === 0){ wrap.innerHTML = '<div class="panel">Nenhuma venda registrada para você ainda.</div>'; return; }
     }
     let html = '';
-    vendedores.forEach(v => {
-      const bateuMeta = v.valor >= META_VENDEDOR;
-      const pct = COMISSAO_PCT + (bateuMeta ? BONUS_PCT_META : 0);
-      const comissao = v.valor * (pct/100);
+    nomes.forEach(nome => {
+      const valor = totais[nome] || 0;
+      const bateuMeta = valor >= META_VENDEDOR;
+      const pctBase = (COMISSAO_CONFIG[nome] !== undefined) ? COMISSAO_CONFIG[nome] : COMISSAO_PCT_PADRAO;
+      const pct = pctBase + (bateuMeta ? BONUS_PCT_META : 0);
+      const comissao = valor * (pct/100);
       html += '<div class="panel">'
-        + '<h2>'+v.nome+' — '+mesLabel(mes)+'</h2>'
+        + '<h2>'+nome+'</h2>'
         + '<div class="grid-kpi" style="margin-bottom:0;">'
-        + '<div class="kpi"><div class="label">Vendido no Mês</div><div class="value">'+fmtR$(v.valor)+'</div></div>'
-        + '<div class="kpi"><div class="label">% de Comissão</div><div class="value">'+pct+'%'+(bateuMeta?' <span class="tag green" style="font-size:9px;">+bônus meta</span>':'')+'</div></div>'
-        + '<div class="kpi"><div class="label">Comissão do Mês</div><div class="value">'+fmtR$(Math.round(comissao))+'</div></div>'
-        + '<div class="kpi"><div class="label">Meta Mensal</div><div class="value" style="font-size:16px;">'+fmtR$(META_VENDEDOR)+(bateuMeta?' <span class="tag green" style="font-size:9px;">Batida ✓</span>':' <span class="tag amber" style="font-size:9px;">Não batida</span>')+'</div></div>'
+        + '<div class="kpi"><div class="label">Vendido (pedidos ativos)</div><div class="value">'+fmtR$(valor)+'</div></div>'
+        + '<div class="kpi"><div class="label">% de Comissão Base</div><div class="value">'
+        + (podeEditarPct
+            ? '<input type="number" step="0.1" min="0" value="'+pctBase+'" style="width:70px;padding:5px 6px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.2);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;" onchange="atualizarPctComissao(\''+nome+'\', this.value)"/> %'
+            : pctBase+'%')
+        + (bateuMeta?' <span class="tag green" style="font-size:9px;">+'+BONUS_PCT_META+'% bônus meta</span>':'')
+        + '</div></div>'
+        + '<div class="kpi"><div class="label">Comissão Calculada</div><div class="value">'+fmtR$(Math.round(comissao))+'</div></div>'
+        + '<div class="kpi"><div class="label">Meta de Vendas</div><div class="value" style="font-size:16px;">'+fmtR$(META_VENDEDOR)+(bateuMeta?' <span class="tag green" style="font-size:9px;">Batida ✓</span>':' <span class="tag amber" style="font-size:9px;">Não batida</span>')+'</div></div>'
         + '</div></div>';
     });
-    wrap.innerHTML = html;
+    wrap.innerHTML = html || '<div class="panel">Nenhum pedido de venda registrado ainda.</div>';
   }
 </script>
 </body>
