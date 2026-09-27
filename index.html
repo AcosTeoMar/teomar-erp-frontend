@@ -1246,7 +1246,7 @@
     document.getElementById('login-pass').value = '';
     aplicarVisibilidadePorPerfil();
     if(typeof renderChat === 'function') renderChat();
-    carregarEquipeAPI(); // busca a equipe real do banco pra atualizar chat e campos de vendedor (não bloqueia o login se falhar)
+    carregarEquipeAPI().then(carregarClientesAPI); // busca a equipe e, na sequência, os clientes reais do banco (não bloqueia o login se falhar)
   }
 
   // ================= EQUIPE REAL (vinda do banco, usada no Chat e nos campos de Vendedor) =================
@@ -1261,6 +1261,51 @@
       popularVendedoresDinamico();
       if(typeof renderChatContatos === 'function') renderChatContatos();
     }catch(e){ /* API fora do ar — mantém as listas fixas locais como estavam */ }
+  }
+
+  // ================= CLIENTES (API REAL) =================
+  function vendedorIdPorNome(nome){
+    const u = EQUIPE_API.find(x => x.nome === nome);
+    return u ? u.id : null;
+  }
+  function vendedorNomePorId(id){
+    const u = EQUIPE_API.find(x => x.id === id);
+    return u ? u.nome : '';
+  }
+  function inferirDocTipo(doc){
+    const digitos = (doc||'').replace(/\D/g,'');
+    return digitos.length === 11 ? 'CPF' : 'CNPJ';
+  }
+  async function carregarClientesAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/clientes', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const rows = await resp.json();
+      CLIENTES.length = 0;
+      rows.forEach(r => CLIENTES.push({
+        id: r.id,
+        razao: r.razao_social,
+        fantasia: r.nome_fantasia || '',
+        docTipo: inferirDocTipo(r.cnpj_cpf),
+        doc: r.cnpj_cpf || '',
+        ie: r.inscricao_estadual || '',
+        tel: r.telefone || '',
+        whats: r.whatsapp || '',
+        email: r.email || '',
+        endereco: r.endereco || '',
+        contato: r.contato_solicitante || '',
+        vendedor: vendedorNomePorId(r.vendedor_id),
+        pagamento: r.forma_pagamento || '',
+        status: r.ativo ? 'Ativo' : 'Inativo',
+        observacoes: r.observacoes || '',
+        limiteCredito: r.limite_credito || 0,
+        _api: true
+      }));
+      const maiorId = CLIENTES.reduce((m,c)=>Math.max(m,c.id),0);
+      if(clienteProxId <= maiorId) clienteProxId = maiorId + 1;
+      renderClientesTable();
+    }catch(e){ /* API fora do ar — mantém a lista local (demo) como estava */ }
   }
 
   function nomesVendedoresDisponiveis(){
@@ -2679,7 +2724,7 @@
     document.getElementById('cl-form-titulo').textContent = 'Cadastrar Cliente';
   }
 
-  function salvarCliente(){
+  async function salvarCliente(){
     const razao = document.getElementById('cl-razao').value.trim();
     if(!razao){ alert('Preencha ao menos a Razão Social.'); return; }
     const id = document.getElementById('cl-id').value;
@@ -2706,16 +2751,44 @@
       status: document.getElementById('cl-status').value
     };
 
-    if(id){
-      const c = CLIENTES.find(x => x.id === parseInt(id));
-      Object.assign(c, dados);
-      registrarEdicao('Cliente — '+razao, 'Editou o cadastro');
-    } else {
-      CLIENTES.push(Object.assign({id: clienteProxId++}, dados));
-      registrarEdicao('Cliente — '+razao, 'Novo cadastro criado');
+    // Este cadastro agora vai direto para o banco de dados real (Railway/Postgres) — não fica mais só na memória do navegador.
+    if(!API_TOKEN){
+      alert('Sua sessão perdeu a conexão com o servidor. Faça login novamente antes de cadastrar, para garantir que os dados não se percam.');
+      return;
     }
-    renderClientesTable();
-    cancelarEdicaoCliente();
+
+    const payloadApi = {
+      razao_social: dados.razao,
+      nome_fantasia: dados.fantasia,
+      cnpj_cpf: dados.doc,
+      inscricao_estadual: dados.ie,
+      telefone: dados.tel,
+      whatsapp: dados.whats,
+      email: dados.email,
+      endereco: montarEnderecoTexto(dados),
+      contato_solicitante: dados.contato,
+      vendedor_id: vendedorIdPorNome(dados.vendedor),
+      forma_pagamento: dados.pagamento,
+      ativo: dados.status === 'Ativo'
+    };
+
+    try{
+      const resp = await fetch(API_BASE+'/api/clientes'+(id ? '/'+id : ''), {
+        method: id ? 'PUT' : 'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify(payloadApi)
+      });
+      if(!resp.ok){
+        const erro = await resp.json().catch(()=>({}));
+        alert('Não foi possível salvar no servidor: '+(erro.erro || ('erro '+resp.status))+'\nO cadastro NÃO foi salvo — corrija e tente novamente.');
+        return;
+      }
+      registrarEdicao('Cliente — '+razao, id ? 'Editou o cadastro' : 'Novo cadastro criado');
+      await carregarClientesAPI();
+      cancelarEdicaoCliente();
+    }catch(e){
+      alert('Sem conexão com o servidor. O cadastro NÃO foi salvo. Verifique sua internet e tente novamente.');
+    }
   }
 
   // ================= FORNECEDORES =================
