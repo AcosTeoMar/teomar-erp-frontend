@@ -1246,7 +1246,7 @@
     document.getElementById('login-pass').value = '';
     aplicarVisibilidadePorPerfil();
     if(typeof renderChat === 'function') renderChat();
-    carregarEquipeAPI().then(carregarClientesAPI); // busca a equipe e, na sequência, os clientes reais do banco (não bloqueia o login se falhar)
+    carregarEquipeAPI().then(()=>{ carregarClientesAPI(); carregarFornecedoresAPI(); carregarMateriaisAPI(); carregarMovimentosEstoqueAPI(); carregarFuncionariosAPI(); }); // busca equipe, clientes, fornecedores, materiais, estoque e funcionários reais do banco (não bloqueia o login se falhar)
   }
 
   // ================= EQUIPE REAL (vinda do banco, usada no Chat e nos campos de Vendedor) =================
@@ -2274,84 +2274,94 @@
     document.getElementById('topbar-avatar').textContent = iniciais;
   });
 
-  // ================= CHAT DA EQUIPE =================
-  const CHAT_MESSAGES = {}; // chave "userA|userB" -> [{de, texto, hora, lido}]
-  let activeChatUser = null;
+  // ================= CHAT DA EQUIPE (API REAL) =================
+  let CONTATOS_CHAT = [];
+  let activeChatUserId = null;
 
-  function chatKey(a,b){ return [a,b].sort().join('|'); }
-
-  function seedChatDemo(){
-    const k1 = chatKey('marcos','renata');
-    if(!CHAT_MESSAGES[k1]) CHAT_MESSAGES[k1] = [
-      {de:'marcos', texto:'Bom dia! Como está a negociação com a Metalúrgica Sul?', hora:'08:32', lido:true},
-      {de:'renata', texto:'Bom dia! Vou mandar o orçamento hoje ainda.', hora:'08:41', lido:true}
-    ];
+  async function carregarContatosChatAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/chat/contatos', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      CONTATOS_CHAT = await resp.json();
+      renderChatContatos();
+    }catch(e){ /* API fora do ar */ }
   }
 
   function renderChatContatos(){
     const wrap = document.getElementById('chat-contatos');
     if(!wrap) return;
     let html = '';
-    todasAsChavesDeUsuarios().forEach(key => {
-      if(key === currentLoginKey) return;
-      const u = getUserInfo(key);
-      const k = chatKey(currentLoginKey, key);
-      const msgs = CHAT_MESSAGES[k] || [];
-      const ultima = msgs[msgs.length-1];
-      const naoLidas = msgs.filter(m => m.de === key && !m.lido).length;
-      html += '<div onclick="abrirChatCom(\''+key+'\')" style="padding:10px 16px; cursor:pointer; border-left:2px solid '+(activeChatUser===key?'var(--torch)':'transparent')+'; background:'+(activeChatUser===key?'rgba(255,255,255,0.04)':'transparent')+';">'
-        + '<div style="font-size:12.5px;color:var(--chrome-100);">'+u.nome+(naoLidas>0?' <span class="tag amber" style="font-size:9px;">'+naoLidas+'</span>':'')+'</div>'
-        + '<div style="font-size:10.5px;color:var(--chrome-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(ultima?ultima.texto:u.cargo)+'</div>'
+    CONTATOS_CHAT.forEach(u => {
+      const ultima = u.ultima_mensagem;
+      html += '<div onclick="abrirChatCom('+u.id+')" style="padding:10px 16px; cursor:pointer; border-left:2px solid '+(activeChatUserId===u.id?'var(--torch)':'transparent')+'; background:'+(activeChatUserId===u.id?'rgba(255,255,255,0.04)':'transparent')+';">'
+        + '<div style="font-size:12.5px;color:var(--chrome-100);">'+u.nome+((u.nao_lidas>0)?' <span class="tag amber" style="font-size:9px;">'+u.nao_lidas+'</span>':'')+'</div>'
+        + '<div style="font-size:10.5px;color:var(--chrome-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(ultima?ultima.texto:(u.cargo||''))+'</div>'
         + '</div>';
     });
     wrap.innerHTML = html;
   }
 
-  function abrirChatCom(key){
-    activeChatUser = key;
-    const k = chatKey(currentLoginKey, key);
-    (CHAT_MESSAGES[k]||[]).forEach(m => { if(m.de === key) m.lido = true; });
+  async function abrirChatCom(id){
+    activeChatUserId = id;
     renderChatContatos();
-    renderChatThread();
+    await renderChatThread();
+    carregarContatosChatAPI();
   }
 
-  function renderChatThread(){
+  async function renderChatThread(){
     const header = document.getElementById('chat-header');
     const wrap = document.getElementById('chat-mensagens');
-    if(!activeChatUser){ header.textContent = 'Selecione uma conversa'; wrap.innerHTML = ''; return; }
-    header.textContent = getUserInfo(activeChatUser).nome+' — '+getUserInfo(activeChatUser).cargo;
-    const k = chatKey(currentLoginKey, activeChatUser);
-    const msgs = CHAT_MESSAGES[k] || [];
-    let html = '';
-    msgs.forEach(m => {
-      const minha = m.de === currentLoginKey;
-      html += '<div style="max-width:70%; align-self:'+(minha?'flex-end':'flex-start')+'; background:'+(minha?'linear-gradient(150deg,var(--petrol-700),var(--petrol-800))':'rgba(255,255,255,0.05)')+'; border:1px solid rgba(185,198,205,0.15); border-radius:3px; padding:8px 11px;">'
-        + '<div style="font-size:12.5px;color:var(--chrome-100);">'+m.texto+'</div>'
-        + '<div style="font-size:9.5px;color:var(--chrome-700);margin-top:3px;text-align:right;">'+m.hora+(minha?(m.lido?' · visto':' · enviado'):'')+'</div>'
-        + '</div>';
-    });
-    wrap.innerHTML = html;
-    wrap.scrollTop = wrap.scrollHeight;
+    if(!activeChatUserId){ header.textContent = 'Selecione uma conversa'; wrap.innerHTML = ''; return; }
+    const contato = CONTATOS_CHAT.find(u => u.id === activeChatUserId);
+    header.textContent = contato ? (contato.nome+' — '+(contato.cargo||'')) : '';
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/chat/conversa/'+activeChatUserId, { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const msgs = await resp.json();
+      let html = '';
+      msgs.forEach(m => {
+        const minha = API_USER && m.de_usuario_id === API_USER.id;
+        const hora = new Date(m.criado_em).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        html += '<div style="max-width:70%; align-self:'+(minha?'flex-end':'flex-start')+'; background:'+(minha?'linear-gradient(150deg,var(--petrol-700),var(--petrol-800))':'rgba(255,255,255,0.05)')+'; border:1px solid rgba(185,198,205,0.15); border-radius:3px; padding:8px 11px;">'
+          + '<div style="font-size:12.5px;color:var(--chrome-100);">'+m.texto+'</div>'
+          + '<div style="font-size:9.5px;color:var(--chrome-700);margin-top:3px;text-align:right;">'+hora+(minha?(m.lido?' · visto':' · enviado'):'')+'</div>'
+          + '</div>';
+      });
+      wrap.innerHTML = html;
+      wrap.scrollTop = wrap.scrollHeight;
+    }catch(e){ /* API fora do ar */ }
   }
 
-  function enviarMensagemChat(){
-    if(!activeChatUser){ alert('Selecione uma conversa primeiro.'); return; }
+  async function enviarMensagemChat(){
+    if(!activeChatUserId){ alert('Selecione uma conversa primeiro.'); return; }
     const input = document.getElementById('chat-input');
     const texto = input.value.trim();
     if(!texto) return;
-    const k = chatKey(currentLoginKey, activeChatUser);
-    if(!CHAT_MESSAGES[k]) CHAT_MESSAGES[k] = [];
-    const hora = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    CHAT_MESSAGES[k].push({de:currentLoginKey, texto, hora, lido:false});
-    input.value = '';
-    renderChatThread();
-    renderChatContatos();
+    if(!API_TOKEN){ alert('Sem conexão com o servidor. A mensagem não foi enviada.'); return; }
+    try{
+      const resp = await fetch(API_BASE+'/api/chat/enviar', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({ para_usuario_id: activeChatUserId, texto })
+      });
+      if(!resp.ok){
+        const e = await resp.json().catch(()=>({}));
+        alert('Não foi possível enviar: '+(e.erro || ('erro '+resp.status)));
+        return;
+      }
+      input.value = '';
+      await renderChatThread();
+      await carregarContatosChatAPI();
+    }catch(e){
+      alert('Sem conexão com o servidor. A mensagem NÃO foi enviada.');
+    }
   }
 
   function renderChat(){
-    seedChatDemo();
-    activeChatUser = null;
-    renderChatContatos();
+    activeChatUserId = null;
+    carregarContatosChatAPI();
     renderChatThread();
   }
 
@@ -2371,7 +2381,6 @@
       clientes: Array.from(document.querySelectorAll('#tbl-clientes tr')).filter(tr=>!tr.querySelector('th')).map(tr => Array.from(tr.children).map(td=>td.textContent)),
       funcionarios: Array.from(document.querySelectorAll('#tbl-funcionarios tr')).filter(tr=>!tr.querySelector('th')).map(tr => Array.from(tr.children).map(td=>td.textContent)),
       auditoria: auditLog,
-      chat: CHAT_MESSAGES,
       modalidadesFrete: MODALIDADES_FRETE,
       proximaNotaNumero: proximaNotaNumero
     };
@@ -2391,9 +2400,8 @@
       try{
         const dados = JSON.parse(e.target.result);
         if(dados.auditoria){ auditLog.length = 0; auditLog.push(...dados.auditoria); renderAuditoria(); }
-        if(dados.chat){ Object.keys(CHAT_MESSAGES).forEach(k=>delete CHAT_MESSAGES[k]); Object.assign(CHAT_MESSAGES, dados.chat); }
         if(dados.proximaNotaNumero) proximaNotaNumero = dados.proximaNotaNumero;
-        alert('Backup importado com sucesso! Clientes e funcionários registrados no arquivo: '+(dados.clientes?dados.clientes.length:0)+' / '+(dados.funcionarios?dados.funcionarios.length:0)+'. (Auditoria e chat foram restaurados automaticamente.)');
+        alert('Backup importado com sucesso! Clientes e funcionários registrados no arquivo: '+(dados.clientes?dados.clientes.length:0)+' / '+(dados.funcionarios?dados.funcionarios.length:0)+'. (Auditoria foi restaurada automaticamente; Clientes, Funcionários e Chat já ficam salvos direto no banco de dados.)');
       }catch(err){
         alert('Não foi possível ler esse arquivo de backup: '+err.message);
       }
@@ -2483,14 +2491,8 @@
   }
 
   // ================= FUNCIONÁRIOS =================
-  let funcionarioProxId = 6;
-  const FUNCIONARIOS = [
-    {id:1, nome:'Marcos T.', cargo:'Diretor / Administrador do Sistema', perfil:'Administrador', vinculo:'CLT', docTipo:'CPF', doc:'', nascimento:'', tel:'(11) 99988-7766', email:'marcos@acosteomar.com.br', endereco:'', admissao:'', status:'Ativo', beneficios:[]},
-    {id:2, nome:'Renata S.', cargo:'Vendedora', perfil:'Vendedor', vinculo:'CLT', docTipo:'CPF', doc:'', nascimento:'', tel:'(11) 98877-6655', email:'renata@acosteomar.com.br', endereco:'', admissao:'', status:'Ativo', beneficios:[]},
-    {id:3, nome:'João P.', cargo:'Cortador', perfil:'Cortador', vinculo:'CLT', docTipo:'CPF', doc:'', nascimento:'', tel:'(11) 97766-5544', email:'joao@acosteomar.com.br', endereco:'', admissao:'', status:'Ativo', beneficios:[]},
-    {id:4, nome:'Ana Ferreira', cargo:'Financeiro', perfil:'Financeiro', vinculo:'CLT', docTipo:'CPF', doc:'', nascimento:'', tel:'(11) 96655-4433', email:'ana@acosteomar.com.br', endereco:'', admissao:'', status:'Ativo', beneficios:[]},
-    {id:5, nome:'Camila Duarte', cargo:'Analista de RH', perfil:'RH', vinculo:'CLT', docTipo:'CPF', doc:'', nascimento:'', tel:'(11) 95544-3322', email:'camila@acosteomar.com.br', endereco:'', admissao:'', status:'Ativo', beneficios:[]}
-  ];
+  let funcionarioProxId = 1;
+  const FUNCIONARIOS = [];
 
   function renderFuncionariosTable(){
     let html = '<tr><th>Nome</th><th>Cargo</th><th>Perfil</th><th>Vínculo</th><th>Documento</th><th>Nascimento</th><th>Telefone</th><th>E-mail</th><th>Benefícios</th><th>Admissão</th><th>Status</th><th></th></tr>';
@@ -2503,6 +2505,35 @@
     });
     document.getElementById('tbl-funcionarios').innerHTML = html;
     renderAniversariantes();
+  }
+
+  async function carregarFuncionariosAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/funcionarios', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const rows = await resp.json();
+      FUNCIONARIOS.length = 0;
+      rows.forEach(r => FUNCIONARIOS.push({
+        id: r.id,
+        nome: r.nome,
+        cargo: r.cargo || '',
+        perfil: '', // ainda não existe coluna no banco pra isso
+        vinculo: 'CLT', // idem
+        docTipo: 'CPF',
+        doc: r.cpf || '',
+        nascimento: '', // idem
+        tel: r.telefone || '',
+        email: r.email || '',
+        endereco: '', // idem
+        admissao: r.data_admissao ? r.data_admissao.substring(0,10) : '',
+        status: r.status || 'Ativo',
+        beneficios: [] // idem
+      }));
+      const maiorId = FUNCIONARIOS.reduce((m,f)=>Math.max(m,f.id),0);
+      if(funcionarioProxId <= maiorId) funcionarioProxId = maiorId + 1;
+      renderFuncionariosTable();
+    }catch(e){ /* API fora do ar — mantém a lista local como estava */ }
   }
 
   function renderAniversariantes(){
@@ -2552,7 +2583,7 @@
     document.getElementById('fn-form-titulo').textContent = 'Cadastrar Funcionário';
   }
 
-  function salvarFuncionario(){
+  async function salvarFuncionario(){
     const nome = document.getElementById('fn-nome').value.trim();
     if(!nome){ alert('Preencha ao menos o nome completo.'); return; }
     const id = document.getElementById('fn-id').value;
@@ -2571,16 +2602,38 @@
       status: document.getElementById('fn-status').value,
       beneficios: getBeneficiosSelecionados()
     };
-    if(id){
-      const f = FUNCIONARIOS.find(x => x.id === parseInt(id));
-      Object.assign(f, dados);
-      registrarEdicao('RH — '+nome, 'Editou o cadastro');
-    } else {
-      FUNCIONARIOS.push(Object.assign({id: funcionarioProxId++}, dados));
-      registrarEdicao('RH — '+nome, 'Novo funcionário cadastrado ('+dados.perfil+')');
+    // Nota: perfil de acesso, vínculo, data de nascimento, endereço e benefícios ainda não têm
+    // coluna no banco — por enquanto só nome, cargo, CPF, telefone, e-mail, admissão e status são salvos.
+    if(!API_TOKEN){
+      alert('Sua sessão perdeu a conexão com o servidor. Faça login novamente antes de cadastrar.');
+      return;
     }
-    renderFuncionariosTable();
-    cancelarEdicaoFuncionario();
+    const payloadApi = {
+      nome: dados.nome,
+      cargo: dados.cargo,
+      cpf: dados.doc,
+      telefone: dados.tel,
+      email: dados.email,
+      data_admissao: dados.admissao || null,
+      status: dados.status
+    };
+    try{
+      const resp = await fetch(API_BASE+'/api/funcionarios'+(id ? '/'+id : ''), {
+        method: id ? 'PUT' : 'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify(payloadApi)
+      });
+      if(!resp.ok){
+        const erro = await resp.json().catch(()=>({}));
+        alert('Não foi possível salvar no servidor: '+(erro.erro || ('erro '+resp.status))+'\nO cadastro NÃO foi salvo.');
+        return;
+      }
+      registrarEdicao('RH — '+nome, id ? 'Editou o cadastro' : 'Novo funcionário cadastrado ('+dados.perfil+')');
+      await carregarFuncionariosAPI();
+      cancelarEdicaoFuncionario();
+    }catch(e){
+      alert('Sem conexão com o servidor. O cadastro NÃO foi salvo. Verifique sua internet e tente novamente.');
+    }
   }
 
   // ================= MÁSCARAS =================
@@ -2806,6 +2859,33 @@
     document.getElementById('tbl-fornecedores').innerHTML = html;
   }
 
+  async function carregarFornecedoresAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/fornecedores', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const rows = await resp.json();
+      FORNECEDORES.length = 0;
+      rows.forEach(r => FORNECEDORES.push({
+        id: r.id,
+        razao: r.razao_social,
+        fornece: r.fornece || '',
+        docTipo: 'CNPJ', // o banco ainda não guarda CNPJ/CPF nem IE do fornecedor
+        doc: '',
+        ie: '',
+        vendedor: r.vendedor_deles || '',
+        tel: r.telefone || '',
+        whats: r.whatsapp || '',
+        email: r.email || '',
+        endereco: r.endereco || '',
+        pagamento: r.condicao_pagamento || ''
+      }));
+      const maiorId = FORNECEDORES.reduce((m,f)=>Math.max(m,f.id),0);
+      if(fornecedorProxId <= maiorId) fornecedorProxId = maiorId + 1;
+      renderFornecedoresTable();
+    }catch(e){ /* API fora do ar — mantém a lista local como estava */ }
+  }
+
   function editarFornecedor(id){
     const f = FORNECEDORES.find(x => x.id === id);
     if(!f) return;
@@ -2831,16 +2911,13 @@
     document.getElementById('forn-form-titulo').textContent = 'Cadastrar Fornecedor';
   }
 
-  function salvarFornecedor(){
+  async function salvarFornecedor(){
     const razao = document.getElementById('forn-razao').value.trim();
     if(!razao){ alert('Preencha ao menos a Razão Social.'); return; }
     const id = document.getElementById('forn-id').value;
     const dados = {
       razao,
       fornece: document.getElementById('forn-fornece').value,
-      docTipo: document.getElementById('forn-doc-tipo').value,
-      doc: document.getElementById('forn-cnpj').value,
-      ie: document.getElementById('forn-ie').value,
       vendedor: document.getElementById('forn-vendedor').value,
       tel: document.getElementById('forn-tel').value,
       whats: document.getElementById('forn-whats').value,
@@ -2848,16 +2925,39 @@
       endereco: document.getElementById('forn-endereco').value,
       pagamento: document.getElementById('forn-pagamento').value
     };
-    if(id){
-      const f = FORNECEDORES.find(x => x.id === parseInt(id));
-      Object.assign(f, dados);
-      registrarEdicao('Fornecedor — '+razao, 'Editou o cadastro');
-    } else {
-      FORNECEDORES.push(Object.assign({id: fornecedorProxId++}, dados));
-      registrarEdicao('Fornecedor — '+razao, 'Novo cadastro criado');
+    // Nota: o banco ainda não tem colunas para CNPJ/CPF e IE de fornecedor — esses dois campos
+    // do formulário, por enquanto, continuam sem ser salvos permanentemente.
+    if(!API_TOKEN){
+      alert('Sua sessão perdeu a conexão com o servidor. Faça login novamente antes de cadastrar.');
+      return;
     }
-    renderFornecedoresTable();
-    cancelarEdicaoFornecedor();
+    const payloadApi = {
+      razao_social: dados.razao,
+      fornece: dados.fornece,
+      vendedor_deles: dados.vendedor,
+      telefone: dados.tel,
+      whatsapp: dados.whats,
+      email: dados.email,
+      endereco: dados.endereco,
+      condicao_pagamento: dados.pagamento
+    };
+    try{
+      const resp = await fetch(API_BASE+'/api/fornecedores'+(id ? '/'+id : ''), {
+        method: id ? 'PUT' : 'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify(payloadApi)
+      });
+      if(!resp.ok){
+        const erro = await resp.json().catch(()=>({}));
+        alert('Não foi possível salvar no servidor: '+(erro.erro || ('erro '+resp.status))+'\nO cadastro NÃO foi salvo.');
+        return;
+      }
+      registrarEdicao('Fornecedor — '+razao, id ? 'Editou o cadastro' : 'Novo cadastro criado');
+      await carregarFornecedoresAPI();
+      cancelarEdicaoFornecedor();
+    }catch(e){
+      alert('Sem conexão com o servidor. O cadastro NÃO foi salvo. Verifique sua internet e tente novamente.');
+    }
   }
 
 
@@ -2928,11 +3028,29 @@
   }
 
   // ================= MATERIAIS / ESTOQUE — sincronizados =================
-  const MATERIAIS = [
-    {cod:'TB-1020', desc:'Tubo SAE 1020', norma:'NBR 6591', medida:'—', preco:8.90, qtd:1200, min:500},
-    {cod:'CH-XAD', desc:'Chapa Xadrez', norma:'NBR 5920', medida:'—', preco:11.40, qtd:460, min:300},
-    {cod:'BR-RD10', desc:'Barra Redonda 10mm', norma:'SAE 1045', medida:'Ø 10 mm', preco:7.60, qtd:800, min:200}
-  ];
+  const MATERIAIS = [];
+
+  async function carregarMateriaisAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/materiais', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const rows = await resp.json();
+      MATERIAIS.length = 0;
+      rows.forEach(r => MATERIAIS.push({
+        _id: r.id,
+        cod: r.codigo,
+        desc: r.descricao,
+        norma: r.norma_tecnica || '—',
+        medida: '—', // o banco ainda não guarda a medida separadamente
+        preco: parseFloat(r.preco_kg) || 0,
+        qtd: parseFloat(r.estoque_atual) || 0,
+        min: parseFloat(r.estoque_minimo) || 0
+      }));
+      renderMateriais();
+      renderEstoque();
+    }catch(e){ /* API fora do ar — mantém a lista local como estava */ }
+  }
   // ESTOQUE é derivado de MATERIAIS pra manter compatibilidade com o resto do sistema (Frete, PDFs etc.)
   function getEstoque(){
     const obj = {};
@@ -2940,7 +3058,7 @@
     return obj;
   }
 
-  function cadastrarMaterial(){
+  async function cadastrarMaterial(){
     const erro = document.getElementById('mat-erro');
     erro.style.display = 'none';
     const cod = document.getElementById('mat-codigo').value.trim().toUpperCase();
@@ -2961,7 +3079,28 @@
       erro.style.display = 'block';
       return;
     }
-    MATERIAIS.push({cod, desc, norma, medida, preco, qtd, min});
+    if(!API_TOKEN){
+      erro.textContent = 'Sessão sem conexão com o servidor. Faça login novamente.';
+      erro.style.display = 'block';
+      return;
+    }
+    try{
+      const resp = await fetch(API_BASE+'/api/materiais', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({ codigo: cod, descricao: desc, norma_tecnica: norma, preco_kg: preco, estoque_minimo: min, estoque_atual: qtd })
+      });
+      if(!resp.ok){
+        const e = await resp.json().catch(()=>({}));
+        erro.textContent = 'Não foi possível salvar no servidor: '+(e.erro || ('erro '+resp.status));
+        erro.style.display = 'block';
+        return;
+      }
+    }catch(e){
+      erro.textContent = 'Sem conexão com o servidor. O material NÃO foi salvo.';
+      erro.style.display = 'block';
+      return;
+    }
     document.getElementById('mat-codigo').value = '';
     document.getElementById('mat-desc').value = '';
     document.getElementById('mat-norma').value = '';
@@ -2969,8 +3108,7 @@
     document.getElementById('mat-preco').value = '';
     document.getElementById('mat-estoque-inicial').value = '0';
     document.getElementById('mat-estoque-minimo').value = '0';
-    renderMateriais();
-    renderEstoque();
+    await carregarMateriaisAPI();
     registrarEdicao('Materiais', 'Cadastrou o material '+desc+' ('+cod+')');
   }
 
@@ -3016,17 +3154,49 @@
     tbl.insertBefore(tr, tbl.children[1]);
   }
 
-  function registrarMovimentacao(){
+  async function carregarMovimentosEstoqueAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/estoque/movimentos', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const rows = await resp.json();
+      const tbl = document.getElementById('tbl-mov-estoque');
+      let html = '<tr><th>Data</th><th>Material</th><th>Tipo</th><th>Qtd.</th><th>Origem</th></tr>';
+      rows.forEach(r => {
+        const data = new Date(r.criado_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+        const tag = r.tipo === 'entrada' ? '<span class="tag green">Entrada</span>' : '<span class="tag amber">Saída</span>';
+        html += '<tr><td>'+data+'</td><td>'+r.material_descricao+'</td><td>'+tag+'</td><td>'+parseFloat(r.quantidade).toLocaleString('pt-BR')+' kg</td><td>'+r.origem+'</td></tr>';
+      });
+      tbl.innerHTML = html;
+    }catch(e){ /* API fora do ar — mantém o histórico local como estava */ }
+  }
+
+  async function registrarMovimentacao(){
     const cod = document.getElementById('mov-material').value;
     const tipo = document.getElementById('mov-tipo').value;
     const qtd = parseFloat(document.getElementById('mov-qtd').value) || 0;
     if(qtd<=0) return;
     const item = MATERIAIS.find(m => m.cod === cod);
     if(!item) return;
-    if(tipo==='entrada') item.qtd += qtd; else item.qtd = Math.max(0, item.qtd-qtd);
-    renderEstoque();
-    adicionarMovimentoHistorico(item.desc, tipo, qtd, 'Manual');
-    registrarEdicao('Estoque — '+item.desc, (tipo==='entrada'?'Entrada de ':'Saída de ')+qtd+' kg');
+    if(!item._id || !API_TOKEN){ alert('Não foi possível confirmar a conexão com o servidor. Recarregue a página e tente novamente antes de movimentar o estoque.'); return; }
+    try{
+      const resp = await fetch(API_BASE+'/api/estoque/movimentos', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({ material_id: item._id, tipo, quantidade: qtd, origem: 'Manual' })
+      });
+      if(!resp.ok){
+        const e = await resp.json().catch(()=>({}));
+        alert('Não foi possível registrar a movimentação: '+(e.erro || ('erro '+resp.status))+'\nNada foi salvo.');
+        return;
+      }
+      await carregarMateriaisAPI();
+      registrarEdicao('Estoque — '+item.desc, (tipo==='entrada'?'Entrada de ':'Saída de ')+qtd+' kg');
+      document.getElementById('mov-qtd').value = '';
+      await carregarMovimentosEstoqueAPI();
+    }catch(e){
+      alert('Sem conexão com o servidor. A movimentação NÃO foi registrada.');
+    }
   }
 
   function baixaAutomaticaEstoque(cod, qtd, origem){
