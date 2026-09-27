@@ -2294,7 +2294,7 @@
     let html = '';
     CONTATOS_CHAT.forEach(u => {
       const ultima = u.ultima_mensagem;
-      html += '<div onclick="abrirChatCom('+u.id+')" style="padding:10px 16px; cursor:pointer; border-left:2px solid '+(activeChatUserId===u.id?'var(--torch)':'transparent')+'; background:'+(activeChatUserId===u.id?'rgba(255,255,255,0.04)':'transparent')+';">'
+      html += '<div onclick="abrirChatCom(\''+u.id+'\')" style="padding:10px 16px; cursor:pointer; border-left:2px solid '+(activeChatUserId===u.id?'var(--torch)':'transparent')+'; background:'+(activeChatUserId===u.id?'rgba(255,255,255,0.04)':'transparent')+';">'
         + '<div style="font-size:12.5px;color:var(--chrome-100);">'+u.nome+((u.nao_lidas>0)?' <span class="tag amber" style="font-size:9px;">'+u.nao_lidas+'</span>':'')+'</div>'
         + '<div style="font-size:10.5px;color:var(--chrome-700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(ultima?ultima.texto:(u.cargo||''))+'</div>'
         + '</div>';
