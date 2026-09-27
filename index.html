@@ -1246,7 +1246,7 @@
     document.getElementById('login-pass').value = '';
     aplicarVisibilidadePorPerfil();
     if(typeof renderChat === 'function') renderChat();
-    carregarEquipeAPI().then(()=>{ carregarClientesAPI(); carregarFornecedoresAPI(); carregarMateriaisAPI(); carregarMovimentosEstoqueAPI(); carregarFuncionariosAPI(); }); // busca equipe, clientes, fornecedores, materiais, estoque e funcionários reais do banco (não bloqueia o login se falhar)
+    carregarEquipeAPI().then(()=>{ carregarClientesAPI(); carregarFornecedoresAPI(); carregarMateriaisAPI(); carregarMovimentosEstoqueAPI(); carregarFuncionariosAPI(); carregarOrcamentosAPI(); carregarPedidosAPI(); }); // busca equipe, clientes, fornecedores, materiais, estoque, funcionários, orçamentos e pedidos reais do banco (não bloqueia o login se falhar)
   }
 
   // ================= EQUIPE REAL (vinda do banco, usada no Chat e nos campos de Vendedor) =================
@@ -1748,7 +1748,7 @@
     const valorPc = pesoUnit * preco;
     const total = valorPc * qty;
     const medida = construirMedidaTexto(shape);
-    itensOrcamentoAtual.push({desc, medida, qty, valorPc, total, entrega});
+    itensOrcamentoAtual.push({desc, medida, qty, pesoUnit, valorPc, total, entrega});
     renderItensOrcamento();
   }
 
@@ -1782,13 +1782,52 @@
     document.getElementById('norc-pagamento').value = c.pagamento;
   }
 
-  function gerarNovoOrcamentoPDF(){
+  async function gerarNovoOrcamentoPDF(){
     if(itensOrcamentoAtual.length === 0){ alert('Adicione ao menos um item ao orçamento antes de gerar o PDF.'); return; }
+    const clienteSelId = document.getElementById('norc-cliente-select').value;
+    if(!clienteSelId){ alert('Selecione um cliente cadastrado antes de gerar o orçamento (isso é necessário para salvar no sistema).'); return; }
+    if(!API_TOKEN){ alert('Sessão sem conexão com o servidor. Faça login novamente.'); return; }
+
+    const payloadApi = {
+      cliente_id: parseInt(clienteSelId),
+      validade_dias: parseInt(document.getElementById('norc-validade-dias').value) || 3,
+      forma_pagamento: document.getElementById('norc-pagamento').value,
+      condicao_entrega: document.getElementById('norc-condicao-entrega').value,
+      itens: itensOrcamentoAtual.map(it => ({
+        material_id: it.material_id || null,
+        descricao: it.desc,
+        medida: it.medida,
+        quantidade: it.qty,
+        peso_unitario: it.pesoUnit || 0,
+        valor_peca: it.valorPc,
+        valor_total: it.total,
+        prazo_entrega: it.entrega
+      }))
+    };
+
+    let orcamentoSalvo;
+    try{
+      const resp = await fetch(API_BASE+'/api/orcamentos', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify(payloadApi)
+      });
+      if(!resp.ok){
+        const e = await resp.json().catch(()=>({}));
+        alert('Não foi possível salvar o orçamento no servidor: '+(e.erro || ('erro '+resp.status))+'\nO PDF não foi gerado.');
+        return;
+      }
+      orcamentoSalvo = await resp.json();
+    }catch(e){
+      alert('Sem conexão com o servidor. O orçamento NÃO foi salvo, o PDF não foi gerado.');
+      return;
+    }
+
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({unit:'mm', format:'a4'});
     const pageW = 210;
     const petrol=[10,22,32], chrome=[110,125,133], dark=[20,20,20], spark=[210,80,30];
-    const numero = 'ORC-'+String(orcamentoProxNumero).padStart(4,'0');
+    const numero = 'ORC-'+String(orcamentoSalvo.numero).padStart(4,'0');
     const hoje = new Date();
     const dataStr = hoje.toLocaleDateString('pt-BR');
 
@@ -1916,49 +1955,92 @@
     doc.text(doc.splitTextToSize(atencao, pageW-36), 26, yt);
 
     abrirPDF(doc, 'Orcamento-'+numero+'.pdf');
-    registrarOrcamentoEmitido(numero, document.getElementById('norc-cliente').value, document.getElementById('norc-validade-dias').value, document.getElementById('norc-vendedor').value, totalGeral);
-    orcamentoProxNumero++;
+    await carregarOrcamentosAPI();
   }
 
-  // ================= REGISTRO AUTOMÁTICO EM "ORÇAMENTOS EMITIDOS" =================
-  let orcamentoProxNumero = 1;
-  function registrarOrcamentoEmitido(numero, cliente, diasValidade, vendedor, valorTotal){
-    const tbl = document.getElementById('tbl-orcamentos');
-    if(!tbl) return;
-    const idBase = numero.replace('ORC-','');
-    const hoje = new Date();
-    const validadeData = new Date(hoje.getTime() + (parseInt(diasValidade)||3)*24*60*60*1000);
-    const validadeStr = validadeData.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
-    const tr = document.createElement('tr');
-    tr.dataset.id = idBase; tr.dataset.vendedor = vendedor || ''; tr.dataset.valor = valorTotal || 0;
-    tr.innerHTML = '<td>'+numero+'</td><td>'+cliente+'</td><td>'+validadeStr+'</td>'
-      +'<td class="cell-status"><select class="status-sel" data-kind="orcamento" data-prev="Enviado" onchange="handleStatusChangeOrcamento(this)">'
-      +'<option value="Enviado" selected>Enviado</option><option value="Aprovado (Gerar Venda)">Aprovado (Gerar Venda)</option><option value="Recusado/Cancelado">Recusado/Cancelado</option></select></td>'
-      +'<td class="cell-audit">—</td><td><button class="icon-btn" onclick="alert(\'Reabra a tela de Orçamentos e gere o PDF novamente se precisar de uma nova via.\')">⬇ PDF</button></td>';
-    tbl.appendChild(tr);
+  // ================= ORÇAMENTOS EMITIDOS (API REAL) =================
+  async function carregarOrcamentosAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/orcamentos', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const rows = await resp.json();
+      const tbl = document.getElementById('tbl-orcamentos');
+      let html = '<tr><th>Nº</th><th>Cliente</th><th>Validade</th><th>Status</th><th>Última Edição</th><th></th></tr>';
+      rows.forEach(o => {
+        const numero = 'ORC-'+String(o.numero).padStart(4,'0');
+        const validadeData = new Date(new Date(o.criado_em).getTime() + (parseInt(o.validade_dias)||3)*24*60*60*1000);
+        const validadeStr = validadeData.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+        const opt = (v,label) => '<option value="'+v+'"'+(v===o.status?' selected':'')+'>'+label+'</option>';
+        html += '<tr data-id="'+o.id+'" data-numero="'+o.numero+'"><td>'+numero+'</td><td>'+o.cliente_nome+'</td><td>'+validadeStr+'</td>'
+          + '<td class="cell-status"><select class="status-sel" data-kind="orcamento" data-prev="'+o.status+'" onchange="handleStatusChangeOrcamentoAPI(this)">'
+          + opt('Enviado','Enviado') + opt('Aprovado','Aprovado (Gerar Venda)') + opt('Recusado','Recusado/Cancelado') + '</select></td>'
+          + '<td class="cell-audit">—</td><td><button class="icon-btn" onclick="alert(\'Reabra a tela de Orçamentos e gere o PDF novamente se precisar de uma nova via.\')">⬇ PDF</button></td></tr>';
+      });
+      tbl.innerHTML = html;
+    }catch(e){ /* API fora do ar — mantém a tabela como estava */ }
   }
-  function handleStatusChangeOrcamento(sel){
-    handleStatusChange(sel);
+
+  async function handleStatusChangeOrcamentoAPI(sel){
     const tr = sel.closest('tr');
+    const id = tr.dataset.id;
     const novoStatus = sel.value;
-    if(novoStatus === 'Aprovado (Gerar Venda)'){
-      const tblPedidos = document.getElementById('tbl-pedidos');
-      if(tblPedidos){
-        const cliente = tr.children[1].textContent;
-        const novoId = tr.dataset.id;
-        const vendedor = tr.dataset.vendedor || '—';
-        const valorNum = parseFloat(tr.dataset.valor) || 0;
-        const valorFmt = 'R$ '+valorNum.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0});
-        const trPedido = document.createElement('tr');
-        trPedido.dataset.id = novoId; trPedido.dataset.vendedor = vendedor; trPedido.dataset.valor = valorNum;
-        trPedido.innerHTML = '<td>#'+novoId+'</td><td>'+cliente+'</td><td>'+vendedor+'</td>'
-          +'<td class="cell-status"><select class="status-sel" data-kind="pedido" data-prev="Em produção" onchange="handleStatusChange(this)">'
-          +'<option value="Em produção" selected>Em produção</option><option value="Faturado">Faturado</option><option value="Aguard. pagto">Aguard. pagto</option><option value="Cancelado">Cancelado</option></select></td>'
-          +'<td class="cell-valor valor-restrito">'+valorFmt+'</td><td>—</td><td>—</td><td class="cell-audit">—</td>'
-          +'<td><button class="icon-btn" onclick="try{gerarPedidoProducaoPDF(this)}catch(e){alert(\'Erro ao gerar PDF: \'+e.message)}">⬇ PDF Produção</button></td>';
-        tblPedidos.appendChild(trPedido);
-        alert('Orçamento aprovado! O pedido #'+novoId+' foi criado em Vendas para seguir para produção/expedição.');
+    const statusAnterior = sel.dataset.prev;
+    if(!API_TOKEN){ alert('Sessão sem conexão com o servidor.'); sel.value = statusAnterior; return; }
+    try{
+      const resp = await fetch(API_BASE+'/api/orcamentos/'+id+'/status', {
+        method:'PUT',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({ status: novoStatus })
+      });
+      if(!resp.ok){
+        const e = await resp.json().catch(()=>({}));
+        alert('Não foi possível atualizar o status: '+(e.erro || ('erro '+resp.status)));
+        sel.value = statusAnterior;
+        return;
       }
+      sel.dataset.prev = novoStatus;
+      const {usuario, hora} = registrarEdicao('Orçamento nº '+tr.dataset.numero, 'Alterou status para "'+novoStatus+'"');
+      const auditCell = tr.querySelector('.cell-audit');
+      if(auditCell) auditCell.innerHTML = usuario+'<span class="audit-note">'+hora+'</span>';
+      if(novoStatus === 'Aprovado' && statusAnterior !== 'Aprovado'){
+        await gerarPedidoAPartirDeOrcamento(id);
+      }
+    }catch(e){
+      alert('Sem conexão com o servidor. O status NÃO foi alterado.');
+      sel.value = statusAnterior;
+    }
+  }
+
+  async function gerarPedidoAPartirDeOrcamento(orcamentoId){
+    try{
+      const resp = await fetch(API_BASE+'/api/orcamentos/'+orcamentoId, { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const orc = await resp.json();
+      const valorTotal = orc.itens.reduce((s,it)=>s+parseFloat(it.valor_total||0),0);
+      const primeiroItem = orc.itens[0] || {};
+      const respPedido = await fetch(API_BASE+'/api/pedidos', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({
+          orcamento_id: orcamentoId,
+          cliente_id: orc.cliente_id,
+          valor: valorTotal,
+          prazo_entrega: primeiroItem.prazo_entrega || '',
+          material_id: primeiroItem.material_id || null,
+          quantidade_material: primeiroItem.quantidade || null
+        })
+      });
+      if(!respPedido.ok){
+        const e = await respPedido.json().catch(()=>({}));
+        alert('Orçamento aprovado, mas não foi possível gerar o pedido automaticamente: '+(e.erro || respPedido.status)+'. Avise o time para criar o pedido manualmente.');
+        return;
+      }
+      const pedido = await respPedido.json();
+      alert('Orçamento aprovado! O pedido #'+pedido.numero+' foi criado em Vendas para seguir para produção/expedição.');
+      await carregarPedidosAPI();
+    }catch(e){
+      alert('Orçamento aprovado, mas houve um erro de conexão ao tentar gerar o pedido automaticamente.');
     }
   }
   atualizarCamposItemOrcamento();
@@ -3007,6 +3089,70 @@
     }
   }
 
+  // ================= PEDIDOS DE VENDA (API REAL) =================
+  const STATUS_PEDIDO_PADRAO = ['Em produção','Faturado','Aguard. pagto','Cancelado'];
+  const STATUS_PEDIDO_CORTADOR = ['Em produção','Finalizado','Atrasado'];
+
+  async function carregarPedidosAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/pedidos', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const rows = await resp.json();
+      const souCortador = API_USER && API_USER.role === 'cortador';
+      const opcoes = souCortador ? STATUS_PEDIDO_CORTADOR : STATUS_PEDIDO_PADRAO;
+      const tbl = document.getElementById('tbl-pedidos');
+      let html = '<tr><th>Nº</th><th>Cliente</th><th>Vendedor</th><th>Status</th><th class="valor-restrito">Valor</th><th>Aprovação da Cotação</th><th>Prazo Entrega</th><th>Última Edição</th><th>Material p/ Corte</th></tr>';
+      rows.forEach(p => {
+        const aprov = p.data_aprovacao_cotacao ? new Date(p.data_aprovacao_cotacao).toLocaleDateString('pt-BR') : '—';
+        const valorFmt = souCortador ? '' : 'R$ '+parseFloat(p.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+        const opts = opcoes.map(s => '<option value="'+s+'"'+(s===p.status?' selected':'')+'>'+s+'</option>').join('');
+        html += '<tr data-id="'+p.id+'" data-vendedor="'+(p.vendedor_nome||'')+'" data-material-desc="'+(p.material_descricao||'')+'" data-material-qtd="'+(p.quantidade_material||0)+'">'
+          + '<td>#'+p.numero+'</td><td>'+p.cliente_nome+'</td><td>'+(p.vendedor_nome||'—')+'</td>'
+          + '<td class="cell-status"><select class="status-sel" data-kind="pedido" data-prev="'+p.status+'" onchange="handleStatusChangePedidoAPI(this)">'+opts+'</select></td>'
+          + '<td class="cell-valor valor-restrito">'+valorFmt+'</td><td>'+aprov+'</td><td>'+(p.prazo_entrega||'—')+'</td><td class="cell-audit">—</td>'
+          + '<td><button class="icon-btn" onclick="try{gerarPedidoProducaoPDF(this)}catch(e){alert(\'Erro ao gerar PDF: \'+e.message)}">⬇ PDF Produção</button></td></tr>';
+      });
+      tbl.innerHTML = html;
+    }catch(e){ /* API fora do ar — mantém a tabela como estava */ }
+  }
+
+  async function handleStatusChangePedidoAPI(sel){
+    const tr = sel.closest('tr');
+    const id = tr.dataset.id;
+    const novoStatus = sel.value;
+    const statusAnterior = sel.dataset.prev;
+    if(!API_TOKEN){ alert('Sessão sem conexão com o servidor.'); sel.value = statusAnterior; return; }
+    try{
+      const resp = await fetch(API_BASE+'/api/pedidos/'+id+'/status', {
+        method:'PUT',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({ status: novoStatus })
+      });
+      if(!resp.ok){
+        const e = await resp.json().catch(()=>({}));
+        alert('Não foi possível atualizar o status: '+(e.erro || ('erro '+resp.status)));
+        sel.value = statusAnterior;
+        return;
+      }
+      sel.dataset.prev = novoStatus;
+      const {usuario, hora} = registrarEdicao('Pedido #'+id, 'Alterou status para "'+novoStatus+'"');
+      const auditCell = tr.querySelector('.cell-audit');
+      if(auditCell) auditCell.innerHTML = usuario+'<span class="audit-note">'+hora+'</span>';
+      // "Faturado" baixa o estoque automaticamente no servidor; aqui só recarregamos pra refletir na tela
+      if(novoStatus === 'Faturado' && statusAnterior !== 'Faturado'){
+        await carregarMateriaisAPI();
+        await carregarMovimentosEstoqueAPI();
+      }
+      if(novoStatus === 'Finalizado' && statusAnterior !== 'Finalizado'){
+        alert('Corte finalizado! O Financeiro foi avisado para emitir Nota Fiscal, Certificado de Qualidade e liberar a entrega.');
+      }
+    }catch(e){
+      alert('Sem conexão com o servidor. O status NÃO foi alterado.');
+      sel.value = statusAnterior;
+    }
+  }
+
   // ================= ALERTAS PARA O FINANCEIRO =================
   const alertasFinanceiro = [];
   function criarAlertaFinanceiro(texto){
@@ -3217,7 +3363,9 @@
     const id = tr.dataset.id;
     const cliente = tr.children[1].textContent;
     const prazo = tr.children[5] ? tr.children[5].textContent : '';
-    const item = PEDIDOS_MATERIAL[id] || {desc:'—', medida:'—', qtd:0};
+    const item = tr.dataset.materialDesc
+      ? {desc: tr.dataset.materialDesc, medida: tr.dataset.materialMedida || '—', qtd: tr.dataset.materialQtd || 0}
+      : (PEDIDOS_MATERIAL[id] || {desc:'—', medida:'—', qtd:0});
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({unit:'mm', format:'a4'});
     const pageW = 210;
