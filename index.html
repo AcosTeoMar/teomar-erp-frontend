@@ -810,41 +810,33 @@
 
           <div class="panel"><h2>Contas a Receber — Faturamento</h2>
             <p style="font-size:11px;color:var(--chrome-500);margin-top:-6px;">Conferir pedido, checar limite de crédito, inserir NCM/CFOP, emitir a nota, liberar a carga para expedição e gerar o boleto.</p>
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:14px;">
+              <div class="field" style="margin-bottom:0;"><label>Pedido</label>
+                <select id="fin-novo-pedido" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;"></select>
+              </div>
+              <div class="field" style="margin-bottom:0;"><label>Vencimento</label><input type="date" id="fin-novo-vencimento"/></div>
+              <div class="field" style="margin-bottom:0;"><label>NCM</label><input type="text" id="fin-novo-ncm" placeholder="7214.20.00"/></div>
+              <div class="field" style="margin-bottom:0;"><label>CFOP</label><input type="text" id="fin-novo-cfop" placeholder="5102"/></div>
+              <button class="btn-primary" style="width:auto;padding:11px 16px;" onclick="salvarContaReceber()">+ Lançar</button>
+            </div>
             <div style="overflow-x:auto;"><table id="tbl-financeiro">
               <tr><th>Pedido</th><th>Cliente</th><th>Limite Créd.</th><th>Vencimento</th><th>Valor</th><th>NCM</th><th>CFOP</th><th>Status Pagto.</th><th></th></tr>
-              <tr data-id="2291" data-cliente="Indústria Reifer" data-cnpj="11.222.333/0001-44" data-valor="22.150,00"><td>#2291</td><td>Indústria Reifer</td><td><span class="tag amber">R$ 20.000</span></td><td>10/09</td><td>R$ 22.150</td>
-                <td><input type="text" class="fin-ncm" value="7214.20.00" style="width:90px;padding:5px 6px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.2);color:var(--chrome-100);font-family:var(--font-mono);font-size:11px;border-radius:2px;"/></td>
-                <td><input type="text" class="fin-cfop" value="5102" style="width:60px;padding:5px 6px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.2);color:var(--chrome-100);font-family:var(--font-mono);font-size:11px;border-radius:2px;"/></td>
-                <td class="cell-status">
-                <select class="status-sel" onchange="registrarEdicao('Financeiro — Pedido #'+this.closest('tr').dataset.id, 'Alterou pagamento para \'' + this.value + '\'')">
-                  <option>Pendente</option><option>Pago</option><option>Atrasado</option>
-                </select></td>
-                <td>
-                  <button class="icon-btn" onclick="try{gerarNotaFiscalPDF(this)}catch(e){alert('Erro ao gerar PDF: '+e.message)}">⬇ Nota Fiscal</button>
-                  <button class="icon-btn" onclick="liberarCargaLogistica(this)">▤ Liberar Carga</button>
-                </td></tr>
-              <tr data-id="2288" data-cliente="Ferragens Nortão" data-cnpj="33.444.555/0001-22" data-valor="6.020,00"><td>#2288</td><td>Ferragens Nortão</td><td><span class="tag green">R$ 50.000</span></td><td>03/09</td><td>R$ 6.020</td>
-                <td><input type="text" class="fin-ncm" value="7213.91.00" style="width:90px;padding:5px 6px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.2);color:var(--chrome-100);font-family:var(--font-mono);font-size:11px;border-radius:2px;"/></td>
-                <td><input type="text" class="fin-cfop" value="5102" style="width:60px;padding:5px 6px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.2);color:var(--chrome-100);font-family:var(--font-mono);font-size:11px;border-radius:2px;"/></td>
-                <td class="cell-status">
-                <select class="status-sel" onchange="registrarEdicao('Financeiro — Pedido #'+this.closest('tr').dataset.id, 'Alterou pagamento para \'' + this.value + '\'')">
-                  <option>Pendente</option><option selected>Pago</option><option>Atrasado</option>
-                </select></td>
-                <td>
-                  <button class="icon-btn" onclick="try{gerarNotaFiscalPDF(this)}catch(e){alert('Erro ao gerar PDF: '+e.message)}">⬇ Nota Fiscal</button>
-                  <button class="icon-btn" onclick="liberarCargaLogistica(this)">▤ Liberar Carga</button>
-                </td></tr>
             </table></div>
           </div>
 
           <div class="panel"><h2>Contas a Pagar</h2>
             <p style="font-size:11px;color:var(--chrome-500);margin-top:-6px;">Conferência de notas fiscais de fornecedores e agendamento dos pagamentos.</p>
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:14px;">
+              <div class="field" style="margin-bottom:0;"><label>Fornecedor</label>
+                <select id="cp-novo-fornecedor" style="width:100%;padding:11px 13px;background:var(--petrol-900);border:1px solid rgba(185,198,205,0.16);color:var(--chrome-100);font-family:var(--font-mono);font-size:13px;border-radius:2px;"></select>
+              </div>
+              <div class="field" style="margin-bottom:0;"><label>Nota Fiscal</label><input type="text" id="cp-novo-nf" placeholder="NF 55.812"/></div>
+              <div class="field" style="margin-bottom:0;"><label>Vencimento</label><input type="date" id="cp-novo-vencimento"/></div>
+              <div class="field" style="margin-bottom:0;"><label>Valor (R$)</label><input type="text" inputmode="decimal" id="cp-novo-valor" placeholder="14.200,00"/></div>
+              <button class="btn-primary" style="width:auto;padding:11px 16px;" onclick="salvarContaPagar()">+ Lançar</button>
+            </div>
             <div style="overflow-x:auto;"><table id="tbl-contas-pagar">
               <tr><th>Fornecedor</th><th>Nota Fiscal</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr>
-              <tr><td>Gerdau Aços Especiais S.A.</td><td>NF 55.812</td><td>08/09</td><td>R$ 14.200</td><td>
-                <select class="status-sel"><option>Pendente</option><option>Agendado</option><option>Pago</option></select></td></tr>
-              <tr><td>Usiminas Comercial Ltda.</td><td>NF 22.980</td><td>15/09</td><td>R$ 8.960</td><td>
-                <select class="status-sel"><option selected>Agendado</option><option>Pendente</option><option>Pago</option></select></td></tr>
             </table></div>
           </div>
 
@@ -1246,7 +1238,14 @@
     document.getElementById('login-pass').value = '';
     aplicarVisibilidadePorPerfil();
     if(typeof renderChat === 'function') renderChat();
-    carregarEquipeAPI().then(()=>{ carregarClientesAPI(); carregarFornecedoresAPI(); carregarMateriaisAPI(); carregarMovimentosEstoqueAPI(); carregarFuncionariosAPI(); carregarOrcamentosAPI(); carregarPedidosAPI(); }); // busca equipe, clientes, fornecedores, materiais, estoque, funcionários, orçamentos e pedidos reais do banco (não bloqueia o login se falhar)
+    carregarEquipeAPI().then(()=>{
+      carregarClientesAPI();
+      carregarMateriaisAPI();
+      carregarMovimentosEstoqueAPI();
+      carregarFuncionariosAPI();
+      carregarOrcamentosAPI();
+      Promise.all([carregarFornecedoresAPI(), carregarPedidosAPI()]).then(carregarFinanceiroAPI);
+    }); // busca equipe, clientes, materiais, estoque, funcionários e orçamentos; depois fornecedores+pedidos, e só então o financeiro (que depende dos dois)
   }
 
   // ================= EQUIPE REAL (vinda do banco, usada no Chat e nos campos de Vendedor) =================
@@ -2491,25 +2490,50 @@
     reader.readAsText(file);
   }
 
-  function adicionarMargemLucro(){
+  async function adicionarMargemLucro(){
     const pedido = document.getElementById('mg-pedido').value.trim();
     if(!pedido) return;
     const compra = parseFloat((document.getElementById('mg-compra').value+'').replace(/\./g,'').replace(',','.')) || 0;
     const frete = parseFloat((document.getElementById('mg-frete').value+'').replace(/\./g,'').replace(',','.')) || 0;
     const venda = parseFloat((document.getElementById('mg-venda').value+'').replace(/\./g,'').replace(',','.')) || 0;
-    const custoTotal = compra + frete;
-    const lucro = venda - custoTotal;
-    const margem = venda > 0 ? (lucro/venda*100) : 0;
-    const tbl = document.getElementById('tbl-margem-lucro');
-    const tr = document.createElement('tr');
-    const classe = lucro >= 0 ? 'green' : 'red';
-    tr.innerHTML = '<td>'+pedido+'</td><td>R$ '+compra.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
-      + '<td>R$ '+frete.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
-      + '<td>R$ '+custoTotal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
-      + '<td>R$ '+venda.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
-      + '<td><span class="tag '+classe+'">R$ '+lucro.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</span></td>'
-      + '<td>'+margem.toFixed(1)+'%</td>';
-    tbl.appendChild(tr);
+    if(!API_TOKEN){ alert('Sessão sem conexão com o servidor.'); return; }
+    try{
+      const resp = await fetch(API_BASE+'/api/financeiro/margem-lucro', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({ descricao: pedido, custo_compra: compra, custo_frete: frete, valor_venda: venda })
+      });
+      if(!resp.ok){ const e = await resp.json().catch(()=>({})); alert('Não foi possível salvar: '+(e.erro||resp.status)); return; }
+      await carregarMargemLucroAPI();
+      registrarEdicao('Financeiro — Margem de Lucro', 'Registrou margem para '+pedido);
+    }catch(e){
+      alert('Sem conexão com o servidor. Não foi salvo.');
+    }
+  }
+
+  async function carregarMargemLucroAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/financeiro/margem-lucro', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const rows = await resp.json();
+      const tbl = document.getElementById('tbl-margem-lucro');
+      let html = '<tr><th>Pedido/Cliente</th><th>Compra</th><th>Frete</th><th>Custo Total</th><th>Venda</th><th>Lucro</th><th>Margem</th></tr>';
+      rows.forEach(m => {
+        const compra = parseFloat(m.custo_compra||0), frete = parseFloat(m.custo_frete||0), venda = parseFloat(m.valor_venda||0);
+        const custoTotal = compra + frete;
+        const lucro = venda - custoTotal;
+        const margem = venda > 0 ? (lucro/venda*100) : 0;
+        const classe = lucro >= 0 ? 'green' : 'red';
+        html += '<tr><td>'+m.descricao+'</td><td>R$ '+compra.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
+          + '<td>R$ '+frete.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
+          + '<td>R$ '+custoTotal.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
+          + '<td>R$ '+venda.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
+          + '<td><span class="tag '+classe+'">R$ '+lucro.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</span></td>'
+          + '<td>'+margem.toFixed(1)+'%</td></tr>';
+      });
+      tbl.innerHTML = html;
+    }catch(e){ /* API fora do ar */ }
   }
 
   // ================= NUMERAÇÃO DA NOTA FISCAL (referência — emissão real exige backend + certificado) =================
@@ -2517,13 +2541,31 @@
   let proximaNotaNumero = 39; // última emitida no Sebrae foi a 38, série 1
   const NOTA_SERIE = 1;
 
-  function gerarNotaFiscalPDF(btn){
+  async function gerarNotaFiscalPDF(btn){
     const tr = btn.closest('tr');
-    const numero = proximaNotaNumero+'/'+NOTA_SERIE;
-    proximaNotaNumero++;
-    const cliente = tr.dataset.cliente;
-    const cnpj = tr.dataset.cnpj;
-    const valor = tr.dataset.valor;
+    const id = tr.dataset.id;
+    let numero, serie;
+    if(API_TOKEN){
+      try{
+        const resp = await fetch(API_BASE+'/api/financeiro/nota-fiscal/confirmar-emissao', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+          body: JSON.stringify({ contas_receber_id: id })
+        });
+        if(!resp.ok){ const e = await resp.json().catch(()=>({})); alert('Não foi possível confirmar a numeração da nota no servidor: '+(e.erro||resp.status)); return; }
+        const data = await resp.json();
+        numero = data.numero; serie = data.serie;
+      }catch(e){
+        alert('Sem conexão com o servidor. A nota não foi numerada.');
+        return;
+      }
+    } else {
+      alert('Sessão sem conexão com o servidor.');
+      return;
+    }
+    const numeroTexto = numero+'/'+serie;
+    const cliente = tr.children[1].textContent;
+    const valor = tr.children[3] ? tr.children[3].textContent.replace('R$ ','') : '';
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({unit:'mm', format:'a4'});
     const pageW = 210;
@@ -2537,7 +2579,7 @@
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(200,210,215);
     doc.text('Confirmação Financeira / Fatura', 38, 19);
     doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(255,255,255);
-    doc.text('Nº '+numero, pageW-12, 14, {align:'right'});
+    doc.text('Nº '+numeroTexto, pageW-12, 14, {align:'right'});
     doc.setFont('helvetica','normal'); doc.setFontSize(9);
     doc.text('Emitido em '+new Date().toLocaleDateString('pt-BR'), pageW-12, 20, {align:'right'});
 
@@ -2546,6 +2588,8 @@
     doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...chrome); doc.text('CLIENTE', 12, y);
     doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(...dark); doc.text(cliente, 12, y+5.5);
     doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...chrome); doc.text('CNPJ', 105, y);
+    const clienteObj = CLIENTES.find(c => c.razao === cliente);
+    const cnpj = clienteObj ? (clienteObj.doc || '—') : '—';
     doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(...dark); doc.text(cnpj, 105, y+5.5);
     y += 20;
 
@@ -2553,8 +2597,8 @@
     doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(9);
     doc.text('REFERENTE A', 14, y); doc.text('NCM', 110, y); doc.text('CFOP', 135, y); doc.text('VALOR TOTAL', 160, y);
     y += 8;
-    const ncm = tr.querySelector('.fin-ncm') ? tr.querySelector('.fin-ncm').value : '—';
-    const cfop = tr.querySelector('.fin-cfop') ? tr.querySelector('.fin-cfop').value : '—';
+    const ncm = tr.children[4] ? tr.children[4].textContent : '—';
+    const cfop = tr.children[5] ? tr.children[5].textContent : '—';
     doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(...dark);
     doc.text('Pedido '+tr.children[0].textContent, 14, y); doc.text(ncm, 110, y); doc.text(cfop, 135, y); doc.text('R$ '+valor, 160, y);
     y += 20;
@@ -2569,7 +2613,8 @@
     doc.setTextColor(200,210,215); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
     doc.text('Aços TeoMar · erp.acosteomar.com.br', pageW/2, 293, {align:'center'});
 
-    abrirPDF(doc, 'NF-'+numero.replace('/','-')+'.pdf');
+    abrirPDF(doc, 'NF-'+numeroTexto.replace('/','-')+'.pdf');
+    await carregarContasReceberAPI();
   }
 
   // ================= FUNCIONÁRIOS =================
@@ -3092,6 +3137,7 @@
   // ================= PEDIDOS DE VENDA (API REAL) =================
   const STATUS_PEDIDO_PADRAO = ['Em produção','Faturado','Aguard. pagto','Cancelado'];
   const STATUS_PEDIDO_CORTADOR = ['Em produção','Finalizado','Atrasado'];
+  let PEDIDOS_CACHE = [];
 
   async function carregarPedidosAPI(){
     if(!API_TOKEN) return;
@@ -3099,6 +3145,7 @@
       const resp = await fetch(API_BASE+'/api/pedidos', { headers:{'Authorization':'Bearer '+API_TOKEN} });
       if(!resp.ok) return;
       const rows = await resp.json();
+      PEDIDOS_CACHE = rows;
       const souCortador = API_USER && API_USER.role === 'cortador';
       const opcoes = souCortador ? STATUS_PEDIDO_CORTADOR : STATUS_PEDIDO_PADRAO;
       const tbl = document.getElementById('tbl-pedidos');
@@ -3153,24 +3200,207 @@
     }
   }
 
-  // ================= ALERTAS PARA O FINANCEIRO =================
-  const alertasFinanceiro = [];
-  function criarAlertaFinanceiro(texto){
-    alertasFinanceiro.unshift({texto, hora: new Date().toLocaleString('pt-BR')});
-    renderAlertasFinanceiro();
+  // ================= ALERTAS PARA O FINANCEIRO (API REAL) =================
+  async function carregarAlertasFinanceiroAPI(){
+    if(!API_TOKEN || !API_USER || !['admin','financeiro'].includes(API_USER.role)) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/financeiro/alertas', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const alertas = await resp.json();
+      const wrap = document.getElementById('alertas-financeiro');
+      if(!wrap) return;
+      if(alertas.length === 0){ wrap.style.display = 'none'; wrap.innerHTML=''; return; }
+      wrap.style.display = 'block';
+      wrap.innerHTML = alertas.map(a =>
+        '<div class="panel" style="background:rgba(255,106,44,0.1); border-color:rgba(255,106,44,0.35); margin-bottom:10px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;">'
+        + '<div><strong style="color:var(--spark);">⚠ Corte finalizado — ação necessária</strong>'
+        + '<p style="font-size:12.5px; color:var(--chrome-100); margin:6px 0 0;">'+a.texto+'</p>'
+        + '<span style="font-size:10.5px; color:var(--chrome-500);">'+new Date(a.criado_em).toLocaleString('pt-BR')+'</span></div>'
+        + '<button class="icon-btn" onclick="marcarAlertaLido('+a.id+', this)">✓ Ciente</button>'
+        + '</div></div>'
+      ).join('');
+    }catch(e){ /* API fora do ar */ }
   }
-  function renderAlertasFinanceiro(){
-    const wrap = document.getElementById('alertas-financeiro');
-    if(!wrap) return;
-    if(alertasFinanceiro.length === 0){ wrap.style.display='none'; return; }
-    wrap.style.display = 'block';
-    wrap.innerHTML = alertasFinanceiro.map(a =>
-      '<div class="panel" style="background:rgba(255,106,44,0.1); border-color:rgba(255,106,44,0.35); margin-bottom:10px;">'
-      + '<strong style="color:var(--spark);">⚠ Corte finalizado — ação necessária</strong>'
-      + '<p style="font-size:12.5px; color:var(--chrome-100); margin:6px 0 0;">'+a.texto+'</p>'
-      + '<span style="font-size:10.5px; color:var(--chrome-500);">'+a.hora+'</span>'
-      + '</div>'
-    ).join('');
+  async function marcarAlertaLido(id, btn){
+    if(!API_TOKEN) return;
+    try{
+      await fetch(API_BASE+'/api/financeiro/alertas/'+id+'/lido', { method:'PUT', headers:{'Authorization':'Bearer '+API_TOKEN} });
+      btn.closest('.panel').remove();
+      const wrap = document.getElementById('alertas-financeiro');
+      if(wrap && !wrap.querySelector('.panel')){ wrap.style.display='none'; }
+    }catch(e){ /* ignora */ }
+  }
+
+  // ================= CONTAS A RECEBER (API REAL) =================
+  function popularSelectPedidosFinanceiro(){
+    const sel = document.getElementById('fin-novo-pedido');
+    if(!sel) return;
+    let html = '<option value="">— selecionar pedido —</option>';
+    PEDIDOS_CACHE.forEach(p => { html += '<option value="'+p.id+'" data-cliente-id="'+p.cliente_id+'" data-valor="'+(p.valor||0)+'">#'+p.numero+' — '+p.cliente_nome+'</option>'; });
+    sel.innerHTML = html;
+  }
+
+  async function carregarContasReceberAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/financeiro/contas-receber', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const rows = await resp.json();
+      const tbl = document.getElementById('tbl-financeiro');
+      let html = '<tr><th>Pedido</th><th>Cliente</th><th>Vencimento</th><th>Valor</th><th>NCM</th><th>CFOP</th><th>Nota Fiscal</th><th>Status Pagto.</th><th></th></tr>';
+      rows.forEach(c => {
+        const venc = c.vencimento ? new Date(c.vencimento).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '—';
+        const opts = ['Pendente','Pago','Atrasado'].map(s=>'<option value="'+s+'"'+(s===c.status?' selected':'')+'>'+s+'</option>').join('');
+        html += '<tr data-id="'+c.id+'" data-pedido-id="'+(c.pedido_id||'')+'" data-cliente="'+c.cliente_nome+'"><td>'+(c.pedido_id?'#'+c.pedido_id:'—')+'</td><td>'+c.cliente_nome+'</td><td>'+venc+'</td><td>R$ '+parseFloat(c.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
+          + '<td>'+(c.ncm||'—')+'</td><td>'+(c.cfop||'—')+'</td><td>'+(c.nota_fiscal_numero||'—')+'</td>'
+          + '<td class="cell-status"><select class="status-sel" onchange="handleStatusContaReceber(this)">'+opts+'</select></td>'
+          + '<td><button class="icon-btn" onclick="try{gerarNotaFiscalPDF(this)}catch(e){alert(\'Erro ao gerar PDF: \'+e.message)}">⬇ Nota Fiscal</button> '
+          + '<button class="icon-btn" onclick="liberarCargaLogistica(this)">▤ Liberar Carga</button></td></tr>';
+      });
+      tbl.innerHTML = html;
+    }catch(e){ /* API fora do ar */ }
+  }
+
+  async function salvarContaReceber(){
+    const sel = document.getElementById('fin-novo-pedido');
+    const pedidoId = sel.value;
+    if(!pedidoId){ alert('Selecione o pedido.'); return; }
+    const opt = sel.options[sel.selectedIndex];
+    const vencimento = document.getElementById('fin-novo-vencimento').value;
+    if(!vencimento){ alert('Informe o vencimento.'); return; }
+    const ncm = document.getElementById('fin-novo-ncm').value;
+    const cfop = document.getElementById('fin-novo-cfop').value;
+    if(!API_TOKEN){ alert('Sessão sem conexão com o servidor.'); return; }
+    try{
+      const resp = await fetch(API_BASE+'/api/financeiro/contas-receber', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({ pedido_id: pedidoId, cliente_id: opt.dataset.clienteId, vencimento, valor: opt.dataset.valor, ncm, cfop })
+      });
+      if(!resp.ok){ const e = await resp.json().catch(()=>({})); alert('Não foi possível lançar: '+(e.erro||resp.status)); return; }
+      document.getElementById('fin-novo-vencimento').value = '';
+      document.getElementById('fin-novo-ncm').value = '';
+      document.getElementById('fin-novo-cfop').value = '';
+      await carregarContasReceberAPI();
+      registrarEdicao('Financeiro — Contas a Receber', 'Lançou conta referente ao pedido #'+opt.textContent);
+    }catch(e){
+      alert('Sem conexão com o servidor. Não foi lançado.');
+    }
+  }
+
+  async function handleStatusContaReceber(sel){
+    const tr = sel.closest('tr');
+    const id = tr.dataset.id;
+    const novoStatus = sel.value;
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/financeiro/contas-receber/'+id+'/status', {
+        method:'PUT',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({ status: novoStatus })
+      });
+      if(!resp.ok){ const e = await resp.json().catch(()=>({})); alert('Não foi possível atualizar: '+(e.erro||resp.status)); return; }
+      registrarEdicao('Financeiro — Pedido '+tr.children[0].textContent, 'Alterou pagamento para "'+novoStatus+'"');
+    }catch(e){
+      alert('Sem conexão com o servidor. O status não foi alterado.');
+    }
+  }
+
+  async function liberarCargaLogistica(btn){
+    const tr = btn.closest('tr');
+    const id = tr.dataset.id;
+    const cliente = tr.dataset.cliente;
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/financeiro/contas-receber/'+id+'/liberar-carga', {
+        method:'POST', headers:{'Authorization':'Bearer '+API_TOKEN}
+      });
+      if(!resp.ok){ const e = await resp.json().catch(()=>({})); alert('Não foi possível liberar: '+(e.erro||resp.status)); return; }
+      registrarEdicao('Financeiro — Pedido '+tr.children[0].textContent, 'Liberou a carga para expedição/logística ('+cliente+')');
+      btn.textContent = '✓ Carga Liberada';
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+    }catch(e){
+      alert('Sem conexão com o servidor. A carga não foi liberada.');
+    }
+  }
+
+  // ================= CONTAS A PAGAR (API REAL) =================
+  function popularSelectFornecedoresFinanceiro(){
+    const sel = document.getElementById('cp-novo-fornecedor');
+    if(!sel) return;
+    let html = '<option value="">— selecionar fornecedor —</option>';
+    FORNECEDORES.forEach(f => { html += '<option value="'+f.id+'">'+f.razao+'</option>'; });
+    sel.innerHTML = html;
+  }
+
+  async function carregarContasPagarAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/financeiro/contas-pagar', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return;
+      const rows = await resp.json();
+      const tbl = document.getElementById('tbl-contas-pagar');
+      let html = '<tr><th>Fornecedor</th><th>Nota Fiscal</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr>';
+      rows.forEach(c => {
+        const venc = c.vencimento ? new Date(c.vencimento).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '—';
+        const opts = ['Pendente','Agendado','Pago'].map(s=>'<option value="'+s+'"'+(s===c.status?' selected':'')+'>'+s+'</option>').join('');
+        html += '<tr data-id="'+c.id+'"><td>'+c.fornecedor_nome+'</td><td>'+(c.nota_fiscal||'—')+'</td><td>'+venc+'</td><td>R$ '+parseFloat(c.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
+          + '<td><select class="status-sel" onchange="handleStatusContaPagar(this)">'+opts+'</select></td></tr>';
+      });
+      tbl.innerHTML = html;
+    }catch(e){ /* API fora do ar */ }
+  }
+
+  async function salvarContaPagar(){
+    const fornecedorId = document.getElementById('cp-novo-fornecedor').value;
+    if(!fornecedorId){ alert('Selecione o fornecedor.'); return; }
+    const notaFiscal = document.getElementById('cp-novo-nf').value;
+    const vencimento = document.getElementById('cp-novo-vencimento').value;
+    if(!vencimento){ alert('Informe o vencimento.'); return; }
+    const valor = parseFloat((document.getElementById('cp-novo-valor').value+'').replace(/\./g,'').replace(',','.')) || 0;
+    if(!API_TOKEN){ alert('Sessão sem conexão com o servidor.'); return; }
+    try{
+      const resp = await fetch(API_BASE+'/api/financeiro/contas-pagar', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({ fornecedor_id: fornecedorId, nota_fiscal: notaFiscal, vencimento, valor })
+      });
+      if(!resp.ok){ const e = await resp.json().catch(()=>({})); alert('Não foi possível lançar: '+(e.erro||resp.status)); return; }
+      document.getElementById('cp-novo-nf').value = '';
+      document.getElementById('cp-novo-vencimento').value = '';
+      document.getElementById('cp-novo-valor').value = '';
+      await carregarContasPagarAPI();
+      registrarEdicao('Financeiro — Contas a Pagar', 'Lançou nova conta a pagar');
+    }catch(e){
+      alert('Sem conexão com o servidor. Não foi lançado.');
+    }
+  }
+
+  async function handleStatusContaPagar(sel){
+    const tr = sel.closest('tr');
+    const id = tr.dataset.id;
+    const novoStatus = sel.value;
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/financeiro/contas-pagar/'+id+'/status', {
+        method:'PUT',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({ status: novoStatus })
+      });
+      if(!resp.ok){ const e = await resp.json().catch(()=>({})); alert('Não foi possível atualizar: '+(e.erro||resp.status)); return; }
+      registrarEdicao('Financeiro — Contas a Pagar', 'Alterou status para "'+novoStatus+'" ('+tr.children[0].textContent+')');
+    }catch(e){
+      alert('Sem conexão com o servidor. O status não foi alterado.');
+    }
+  }
+
+  // Carrega tudo do Financeiro de uma vez (chamado ao abrir a aba e após login)
+  async function carregarFinanceiroAPI(){
+    popularSelectPedidosFinanceiro();
+    popularSelectFornecedoresFinanceiro();
+    await Promise.all([carregarAlertasFinanceiroAPI(), carregarContasReceberAPI(), carregarContasPagarAPI(), carregarMargemLucroAPI()]);
   }
 
   // ================= MATERIAIS / ESTOQUE — sincronizados =================
