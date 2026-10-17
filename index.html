@@ -2639,13 +2639,13 @@
 
   // ================= NUMERAÇÃO DA NOTA FISCAL (referência — emissão real exige backend + certificado) =================
   const TEOMAR_CNPJ = '57.090.507/0001-09';
-  let proximaNotaNumero = 39; // última emitida no Sebrae foi a 38, série 1
+  let proximaNotaNumero = 39; // referência antiga (o número real vem do servidor)
   const NOTA_SERIE = 1;
 
   async function gerarNotaFiscalPDF(btn){
     const tr = btn.closest('tr');
     const id = tr.dataset.id;
-    let numero, serie;
+    let numero, serie, jaNumerada = false;
     if(API_TOKEN){
       try{
         const resp = await fetch(API_BASE+'/api/financeiro/nota-fiscal/confirmar-emissao', {
@@ -2655,7 +2655,7 @@
         });
         if(!resp.ok){ const e = await resp.json().catch(()=>({})); alert('Não foi possível confirmar a numeração da nota no servidor: '+(e.erro||resp.status)); return; }
         const data = await resp.json();
-        numero = data.numero; serie = data.serie;
+        numero = data.numero; serie = data.serie; jaNumerada = !!data.ja_numerada;
       }catch(e){
         alert('Sem conexão com o servidor. A nota não foi numerada.');
         return;
@@ -2716,6 +2716,34 @@
 
     abrirPDF(doc, 'NF-'+numeroTexto.replace('/','-')+'.pdf');
     await carregarContasReceberAPI();
+    if(!jaNumerada){
+      alert('Esta venda foi numerada como '+numeroTexto+' neste sistema.\nEmita a nota no Sebrae com ESTE número. Se o Sebrae gerar outro número, toque em "✎ Nº Sebrae" na mesma linha para corrigir.');
+    }
+  }
+
+  // Registra o número que o emissor do Sebrae realmente gerou para esta venda
+  async function informarNumeroNotaSebrae(btn){
+    const tr = btn.closest('tr');
+    const id = tr.dataset.id;
+    const atual = tr.children[6] ? tr.children[6].textContent : '—';
+    const resposta = prompt('Digite o número da nota que o Sebrae gerou para esta venda (só o número, ex: 39).\nNúmero atual no sistema: '+atual);
+    if(resposta === null) return;
+    const numero = resposta.trim();
+    if(!/^\d{1,9}$/.test(numero) || parseInt(numero,10) < 1){ alert('Digite apenas o número da nota, por exemplo: 39'); return; }
+    if(!API_TOKEN){ alert('Sessão sem conexão com o servidor.'); return; }
+    try{
+      const resp = await fetch(API_BASE+'/api/financeiro/nota-fiscal/confirmar-emissao', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({ contas_receber_id: id, numero_manual: numero })
+      });
+      const data = await resp.json().catch(()=>({}));
+      if(!resp.ok){ alert('Não foi possível registrar o número: '+(data.erro || ('erro '+resp.status))); return; }
+      alert('Número registrado: '+data.numero+'/'+data.serie+'. A próxima nota do sistema será '+(data.numero+1)+', a menos que já esteja mais adiante.');
+      await carregarContasReceberAPI();
+    }catch(e){
+      alert('Sem conexão com o servidor. O número NÃO foi registrado.');
+    }
   }
 
   // ================= FUNCIONÁRIOS =================
@@ -3358,10 +3386,11 @@
       rows.forEach(c => {
         const venc = c.vencimento ? new Date(c.vencimento).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '—';
         const opts = ['Pendente','Pago','Atrasado'].map(s=>'<option value="'+s+'"'+(s===c.status?' selected':'')+'>'+s+'</option>').join('');
-        html += '<tr data-id="'+c.id+'" data-pedido-id="'+(c.pedido_id||'')+'" data-cliente="'+c.cliente_nome+'"><td>'+(c.pedido_id?'#'+c.pedido_id:'—')+'</td><td>'+c.cliente_nome+'</td><td>'+venc+'</td><td>R$ '+parseFloat(c.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
+        html += '<tr data-id="'+c.id+'" data-pedido-id="'+(c.pedido_id||'')+'" data-cliente="'+c.cliente_nome+'"><td>'+(c.pedido_numero?'#'+c.pedido_numero:(c.pedido_id?'#'+c.pedido_id:'—'))+'</td><td>'+c.cliente_nome+'</td><td>'+venc+'</td><td>R$ '+parseFloat(c.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
           + '<td>'+(c.ncm||'—')+'</td><td>'+(c.cfop||'—')+'</td><td>'+(c.nota_fiscal_numero||'—')+'</td>'
           + '<td class="cell-status"><select class="status-sel" onchange="handleStatusContaReceber(this)">'+opts+'</select></td>'
           + '<td><button class="icon-btn" onclick="try{gerarNotaFiscalPDF(this)}catch(e){alert(\'Erro ao gerar PDF: \'+e.message)}">⬇ Nota Fiscal</button> '
+          + '<button class="icon-btn" onclick="informarNumeroNotaSebrae(this)">✎ Nº Sebrae</button> '
           + '<button class="icon-btn" onclick="liberarCargaLogistica(this)">▤ Liberar Carga</button></td></tr>';
       });
       tbl.innerHTML = html;
