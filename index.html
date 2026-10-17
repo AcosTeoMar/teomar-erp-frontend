@@ -436,6 +436,11 @@
             <h2>Backup dos Dados</h2>
             <p style="font-size:11.5px;color:var(--chrome-500);margin-top:-6px;">
               Os dados do sistema ficam salvos no banco de dados online. Use estes botões para guardar uma cópia de segurança em arquivo no seu aparelho.</p>
+            <p style="font-size:11.5px;color:var(--chrome-500);margin:0 0 10px;">
+              <strong>Backup do banco de dados (recomendado toda semana):</strong> baixa um arquivo com todos os cadastros, orçamentos, pedidos e financeiro que estão salvos no servidor. Guarde o arquivo em um lugar seguro (iCloud, Google Drive ou e-mail). Senhas e fotos de perfil não entram no arquivo.
+            </p>
+            <button class="btn-primary" style="width:auto;padding:11px 18px;margin:0 10px 14px 0;" onclick="baixarBackupBanco(this)">⬇ Baixar backup do banco de dados</button>
+            <br/>
             <button class="btn-primary" style="width:auto;padding:11px 18px;margin-right:10px;" onclick="exportarBackup()">⬇ Exportar Backup (.json)</button>
             <label class="btn-primary" style="width:auto;padding:11px 18px;display:inline-block;cursor:pointer;">
               Importar Backup
@@ -1434,6 +1439,33 @@
     document.getElementById('modal-usuario').classList.add('active');
   }
 
+  async function baixarBackupBanco(btn){
+    if(!API_TOKEN){ alert('Sua sessão perdeu a conexão com o servidor. Faça login novamente.'); return; }
+    const textoOriginal = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Gerando backup...';
+    try{
+      const resp = await fetch(API_BASE+'/api/usuarios/backup', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok){
+        const e = await resp.json().catch(()=>({}));
+        alert('Não foi possível gerar o backup: '+(e.erro || ('erro '+resp.status)));
+        return;
+      }
+      const blob = await resp.blob();
+      const d = new Date();
+      const nome = 'teomar-backup-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = nome;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+      alert('Backup gerado: '+nome+'\nSe o arquivo abrir como texto, use Compartilhar > Salvar em Arquivos.');
+    }catch(e){
+      alert('Sem conexão com o servidor. O backup NÃO foi gerado.');
+    }finally{
+      btn.disabled = false; btn.textContent = textoOriginal;
+    }
+  }
+
   function abrirModalMinhaSenha(){
     ['ms-atual','ms-nova','ms-nova2'].forEach(function(i){ document.getElementById(i).value=''; });
     document.getElementById('ms-erro').style.display='none';
@@ -1836,7 +1868,7 @@
   function preencherClienteOrcamento(){
     const id = document.getElementById('norc-cliente-select').value;
     if(id === '') return;
-    const c = CLIENTES.find(x => x.id === parseInt(id));
+    const c = CLIENTES.find(x => String(x.id) === String(id));
     if(!c) return;
     document.getElementById('norc-cliente').value = c.razao;
     document.getElementById('norc-fantasia').value = c.fantasia;
@@ -1857,7 +1889,7 @@
     if(!API_TOKEN){ alert('Sessão sem conexão com o servidor. Faça login novamente.'); return; }
 
     const payloadApi = {
-      cliente_id: parseInt(clienteSelId),
+      cliente_id: clienteSelId,
       validade_dias: parseInt(document.getElementById('norc-validade-dias').value) || 3,
       forma_pagamento: document.getElementById('norc-pagamento').value,
       condicao_entrega: document.getElementById('norc-condicao-entrega').value,
@@ -2697,7 +2729,7 @@
       const nascFmt = f.nascimento ? f.nascimento.split('-').reverse().join('/') : '—';
       const admFmt = f.admissao ? f.admissao.split('-').reverse().join('/') : '—';
       const benef = (f.beneficios && f.beneficios.length) ? f.beneficios.join(', ') : '—';
-      html += '<tr><td>'+f.nome+'</td><td>'+f.cargo+'</td><td>'+f.perfil+'</td><td>'+(f.vinculo||'CLT')+'</td><td>'+(f.doc||'—')+'</td><td>'+nascFmt+'</td><td>'+f.tel+'</td><td>'+f.email+'</td><td>'+benef+'</td><td>'+admFmt+'</td><td><span class="tag '+classe+'">'+f.status+'</span></td><td><button onclick="editarFuncionario('+f.id+')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
+      html += '<tr><td>'+f.nome+'</td><td>'+f.cargo+'</td><td>'+f.perfil+'</td><td>'+(f.vinculo||'CLT')+'</td><td>'+(f.doc||'—')+'</td><td>'+nascFmt+'</td><td>'+f.tel+'</td><td>'+f.email+'</td><td>'+benef+'</td><td>'+admFmt+'</td><td><span class="tag '+classe+'">'+f.status+'</span></td><td><button onclick="editarFuncionario(\''+f.id+'\')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
     });
     document.getElementById('tbl-funcionarios').innerHTML = html;
     renderAniversariantes();
@@ -2714,17 +2746,17 @@
         id: r.id,
         nome: r.nome,
         cargo: r.cargo || '',
-        perfil: '', // ainda não existe coluna no banco pra isso
-        vinculo: 'CLT', // idem
-        docTipo: 'CPF',
+        perfil: r.perfil || '',
+        vinculo: r.vinculo || 'CLT',
+        docTipo: r.doc_tipo || 'CPF',
         doc: r.cpf || '',
-        nascimento: '', // idem
+        nascimento: r.data_nascimento ? String(r.data_nascimento).substring(0,10) : '',
         tel: r.telefone || '',
         email: r.email || '',
-        endereco: '', // idem
+        endereco: r.endereco || '',
         admissao: r.data_admissao ? r.data_admissao.substring(0,10) : '',
         status: r.status || 'Ativo',
-        beneficios: [] // idem
+        beneficios: Array.isArray(r.beneficios) ? r.beneficios : []
       }));
       const maiorId = FUNCIONARIOS.reduce((m,f)=>Math.max(m,f.id),0);
       if(funcionarioProxId <= maiorId) funcionarioProxId = maiorId + 1;
@@ -2752,7 +2784,7 @@
   }
 
   function editarFuncionario(id){
-    const f = FUNCIONARIOS.find(x => x.id === id);
+    const f = FUNCIONARIOS.find(x => String(x.id) === String(id));
     if(!f) return;
     document.getElementById('fn-id').value = f.id;
     document.getElementById('fn-nome').value = f.nome;
@@ -2798,8 +2830,6 @@
       status: document.getElementById('fn-status').value,
       beneficios: getBeneficiosSelecionados()
     };
-    // Nota: perfil de acesso, vínculo, data de nascimento, endereço e benefícios ainda não têm
-    // coluna no banco — por enquanto só nome, cargo, CPF, telefone, e-mail, admissão e status são salvos.
     if(!API_TOKEN){
       alert('Sua sessão perdeu a conexão com o servidor. Faça login novamente antes de cadastrar.');
       return;
@@ -2811,7 +2841,13 @@
       telefone: dados.tel,
       email: dados.email,
       data_admissao: dados.admissao || null,
-      status: dados.status
+      status: dados.status,
+      perfil: dados.perfil,
+      vinculo: dados.vinculo,
+      doc_tipo: dados.docTipo,
+      data_nascimento: dados.nascimento || null,
+      endereco: dados.endereco,
+      beneficios: dados.beneficios
     };
     try{
       const resp = await fetch(API_BASE+'/api/funcionarios'+(id ? '/'+id : ''), {
@@ -2929,14 +2965,14 @@
     let html = '<tr><th>Razão Social</th><th>Nome Fantasia</th><th>Documento</th><th>IE</th><th>Contato/Solicitante</th><th>Vendedor</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th>Endereço</th><th>Forma Pagto.</th><th>Status</th><th></th></tr>';
     CLIENTES.forEach(c => {
       const classe = c.status === 'Ativo' ? 'green' : 'amber';
-      html += '<tr><td>'+c.razao+'</td><td>'+c.fantasia+'</td><td>'+c.doc+'</td><td>'+(c.ie||'—')+'</td><td>'+c.contato+'</td><td>'+c.vendedor+'</td><td>'+c.tel+'</td><td>'+c.whats+'</td><td>'+c.email+'</td><td>'+montarEnderecoTexto(c)+'</td><td>'+c.pagamento+'</td><td><span class="tag '+classe+'">'+c.status+'</span></td><td><button onclick="editarCliente('+c.id+')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
+      html += '<tr><td>'+c.razao+'</td><td>'+c.fantasia+'</td><td>'+c.doc+'</td><td>'+(c.ie||'—')+'</td><td>'+c.contato+'</td><td>'+c.vendedor+'</td><td>'+c.tel+'</td><td>'+c.whats+'</td><td>'+c.email+'</td><td>'+montarEnderecoTexto(c)+'</td><td>'+c.pagamento+'</td><td><span class="tag '+classe+'">'+c.status+'</span></td><td><button onclick="editarCliente(\''+c.id+'\')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
     });
     document.getElementById('tbl-clientes').innerHTML = html;
     popularSelectClientesOrcamento();
   }
 
   async function editarCliente(id){
-    const c = CLIENTES.find(x => x.id === id);
+    const c = CLIENTES.find(x => String(x.id) === String(id));
     if(!c) return;
     document.getElementById('cl-id').value = c.id;
     document.getElementById('cl-razao').value = c.razao;
@@ -3050,7 +3086,7 @@
   function renderFornecedoresTable(){
     let html = '<tr><th>Razão Social</th><th>Fornece</th><th>Documento</th><th>IE</th><th>Vendedor (deles)</th><th>Telefone</th><th>WhatsApp</th><th>E-mail</th><th>Endereço</th><th>Condição Pagto.</th><th></th></tr>';
     FORNECEDORES.forEach(f => {
-      html += '<tr><td>'+f.razao+'</td><td>'+f.fornece+'</td><td>'+f.doc+'</td><td>'+(f.ie||'—')+'</td><td>'+f.vendedor+'</td><td>'+f.tel+'</td><td>'+f.whats+'</td><td>'+f.email+'</td><td>'+f.endereco+'</td><td>'+f.pagamento+'</td><td><button onclick="editarFornecedor('+f.id+')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
+      html += '<tr><td>'+f.razao+'</td><td>'+f.fornece+'</td><td>'+f.doc+'</td><td>'+(f.ie||'—')+'</td><td>'+f.vendedor+'</td><td>'+f.tel+'</td><td>'+f.whats+'</td><td>'+f.email+'</td><td>'+f.endereco+'</td><td>'+f.pagamento+'</td><td><button onclick="editarFornecedor(\''+f.id+'\')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
     });
     document.getElementById('tbl-fornecedores').innerHTML = html;
   }
@@ -3066,9 +3102,9 @@
         id: r.id,
         razao: r.razao_social,
         fornece: r.fornece || '',
-        docTipo: 'CNPJ', // o banco ainda não guarda CNPJ/CPF nem IE do fornecedor
-        doc: '',
-        ie: '',
+        docTipo: r.doc_tipo || 'CNPJ',
+        doc: r.cnpj_cpf || '',
+        ie: r.inscricao_estadual || '',
         vendedor: r.vendedor_deles || '',
         tel: r.telefone || '',
         whats: r.whatsapp || '',
@@ -3083,7 +3119,7 @@
   }
 
   function editarFornecedor(id){
-    const f = FORNECEDORES.find(x => x.id === id);
+    const f = FORNECEDORES.find(x => String(x.id) === String(id));
     if(!f) return;
     document.getElementById('forn-id').value = f.id;
     document.getElementById('forn-razao').value = f.razao;
@@ -3121,8 +3157,6 @@
       endereco: document.getElementById('forn-endereco').value,
       pagamento: document.getElementById('forn-pagamento').value
     };
-    // Nota: o banco ainda não tem colunas para CNPJ/CPF e IE de fornecedor — esses dois campos
-    // do formulário, por enquanto, continuam sem ser salvos permanentemente.
     if(!API_TOKEN){
       alert('Sua sessão perdeu a conexão com o servidor. Faça login novamente antes de cadastrar.');
       return;
@@ -3135,7 +3169,10 @@
       whatsapp: dados.whats,
       email: dados.email,
       endereco: dados.endereco,
-      condicao_pagamento: dados.pagamento
+      condicao_pagamento: dados.pagamento,
+      doc_tipo: document.getElementById('forn-doc-tipo').value,
+      cnpj_cpf: document.getElementById('forn-cnpj').value,
+      inscricao_estadual: document.getElementById('forn-ie').value
     };
     try{
       const resp = await fetch(API_BASE+'/api/fornecedores'+(id ? '/'+id : ''), {
@@ -3286,7 +3323,7 @@
         + '<div><strong style="color:var(--spark);">⚠ Corte finalizado — ação necessária</strong>'
         + '<p style="font-size:12.5px; color:var(--chrome-100); margin:6px 0 0;">'+a.texto+'</p>'
         + '<span style="font-size:10.5px; color:var(--chrome-500);">'+new Date(a.criado_em).toLocaleString('pt-BR')+'</span></div>'
-        + '<button class="icon-btn" onclick="marcarAlertaLido('+a.id+', this)">✓ Ciente</button>'
+        + '<button class="icon-btn" onclick="marcarAlertaLido(\''+a.id+'\', this)">✓ Ciente</button>'
         + '</div></div>'
       ).join('');
     }catch(e){ /* API fora do ar */ }
@@ -3487,7 +3524,7 @@
         cod: r.codigo,
         desc: r.descricao,
         norma: r.norma_tecnica || '—',
-        medida: '—', // o banco ainda não guarda a medida separadamente
+        medida: r.medida || '—',
         preco: parseFloat(r.preco_kg) || 0,
         qtd: parseFloat(r.estoque_atual) || 0,
         min: parseFloat(r.estoque_minimo) || 0
@@ -3533,7 +3570,7 @@
       const resp = await fetch(API_BASE+'/api/materiais', {
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
-        body: JSON.stringify({ codigo: cod, descricao: desc, norma_tecnica: norma, preco_kg: preco, estoque_minimo: min, estoque_atual: qtd })
+        body: JSON.stringify({ codigo: cod, descricao: desc, norma_tecnica: norma, medida: (medida === '—' ? '' : medida), preco_kg: preco, estoque_minimo: min, estoque_atual: qtd })
       });
       if(!resp.ok){
         const e = await resp.json().catch(()=>({}));
