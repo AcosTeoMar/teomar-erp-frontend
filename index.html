@@ -315,6 +315,7 @@
           <label class="avatar" id="topbar-avatar" style="cursor:pointer;overflow:hidden;background-image:none;background-size:cover;background-position:center;" title="Clique para trocar a foto de perfil"><span id="avatar-initials">MT</span>
             <input type="file" accept="image/*" id="avatar-upload" style="display:none;" onchange="trocarFotoPerfil(this)"/>
           </label>
+          <button class="icon-btn" onclick="abrirModalMinhaSenha()" style="margin-left:4px;">Minha senha</button>
           <button class="icon-btn" onclick="fazerLogout()" style="margin-left:4px;">Sair</button>
         </div>
       </div>
@@ -366,6 +367,21 @@
             </table></div>
           </div>
 
+
+          <!-- Modal: alterar a própria senha -->
+          <div class="modal-bg" id="modal-minha-senha">
+            <div class="modal-box">
+              <h3>Alterar minha senha</h3>
+              <div class="usr-erro" id="ms-erro"></div>
+              <div class="field"><label>Senha atual</label><input type="password" id="ms-atual" autocomplete="current-password"/></div>
+              <div class="field"><label>Nova senha</label><input type="password" id="ms-nova" placeholder="mínimo 6 caracteres" autocomplete="new-password"/></div>
+              <div class="field"><label>Repita a nova senha</label><input type="password" id="ms-nova2" autocomplete="new-password"/></div>
+              <div class="modal-actions">
+                <button onclick="fecharModalMinhaSenha()">Cancelar</button>
+                <button class="primary" onclick="salvarMinhaSenha()">Salvar</button>
+              </div>
+            </div>
+          </div>
           <!-- Modal de criar/editar usuário -->
           <div class="modal-bg" id="modal-usuario">
             <div class="modal-box">
@@ -374,7 +390,7 @@
               <input type="hidden" id="usr-id"/>
               <div class="field"><label>Nome</label><input type="text" id="usr-nome" placeholder="Nome completo"/></div>
               <div class="field"><label>Login</label><input type="text" id="usr-login" placeholder="ex: joao"/></div>
-              <div class="field" id="usr-senha-field"><label>Senha</label><input type="password" id="usr-senha" placeholder="mínimo 6 caracteres"/></div>
+              <div class="field" id="usr-senha-field"><label id="usr-senha-label">Senha</label><input type="password" id="usr-senha" placeholder="mínimo 6 caracteres" autocomplete="new-password"/></div>
               <div class="field"><label>Cargo</label><input type="text" id="usr-cargo" placeholder="ex: Vendedor"/></div>
               <div class="field"><label>Perfil de Acesso</label>
                 <select id="usr-role">
@@ -1407,13 +1423,48 @@
       document.getElementById('usr-login').disabled = true; // login não muda depois de criado
       document.getElementById('usr-cargo').value = usuario.cargo || '';
       document.getElementById('usr-role').value = usuario.role || 'vendedor';
-      document.getElementById('usr-senha-field').style.display = 'none'; // troca de senha é feita pelo próprio usuário
+      document.getElementById('usr-senha-field').style.display = 'block'; // administrador pode redefinir a senha
+      document.getElementById('usr-senha-label').textContent = 'Nova senha (deixe em branco para não alterar)';
       document.getElementById('usr-ativo-field').style.display = 'block';
       document.getElementById('usr-ativo').value = usuario.ativo ? 'true' : 'false';
     } else {
       document.getElementById('usr-modal-titulo').textContent = 'Novo Usuário';
+      document.getElementById('usr-senha-label').textContent = 'Senha';
     }
     document.getElementById('modal-usuario').classList.add('active');
+  }
+
+  function abrirModalMinhaSenha(){
+    ['ms-atual','ms-nova','ms-nova2'].forEach(function(i){ document.getElementById(i).value=''; });
+    document.getElementById('ms-erro').style.display='none';
+    document.getElementById('modal-minha-senha').classList.add('active');
+  }
+  function fecharModalMinhaSenha(){
+    document.getElementById('modal-minha-senha').classList.remove('active');
+  }
+  async function salvarMinhaSenha(){
+    const erro = document.getElementById('ms-erro');
+    const atual = document.getElementById('ms-atual').value;
+    const nova = document.getElementById('ms-nova').value;
+    const nova2 = document.getElementById('ms-nova2').value;
+    function falha(m){ erro.textContent = m; erro.style.display='block'; }
+    erro.style.display='none';
+    if(!atual || !nova) return falha('Preencha a senha atual e a nova senha.');
+    if(nova.length < 6) return falha('A nova senha precisa ter ao menos 6 caracteres.');
+    if(nova !== nova2) return falha('As duas senhas novas não são iguais.');
+    try{
+      const resp = await fetch(API_BASE+'/api/auth/senha', {
+        method:'PUT',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+        body: JSON.stringify({senhaAtual: atual, novaSenha: nova})
+      });
+      const data = await resp.json().catch(()=>({}));
+      if(!resp.ok) return falha(data.erro || 'Não foi possível trocar a senha.');
+      fecharModalMinhaSenha();
+      alert('Senha alterada com sucesso.');
+    }catch(e){
+      falha('Erro de conexão com a API.');
+    }
   }
 
   function fecharModalUsuario(){
@@ -1440,6 +1491,11 @@
       erro.style.display = 'block';
       return;
     }
+    if(id && senha && senha.length < 6){
+      erro.textContent = 'A nova senha precisa ter ao menos 6 caracteres.';
+      erro.style.display = 'block';
+      return;
+    }
 
     try{
       let resp;
@@ -1462,6 +1518,20 @@
         erro.textContent = data.erro || 'Erro ao salvar usuário.';
         erro.style.display = 'block';
         return;
+      }
+      if(id && senha){
+        const r2 = await fetch(API_BASE+'/api/usuarios/'+id+'/senha', {
+          method:'PUT',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+API_TOKEN},
+          body: JSON.stringify({novaSenha: senha})
+        });
+        const d2 = await r2.json().catch(()=>({}));
+        if(!r2.ok){
+          erro.textContent = 'Dados salvos, mas a senha NÃO foi alterada: ' + (d2.erro || 'erro ao redefinir a senha.');
+          erro.style.display = 'block';
+          return;
+        }
+        alert('Senha redefinida com sucesso.');
       }
       fecharModalUsuario();
       renderUsuariosReal();
