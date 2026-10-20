@@ -1264,6 +1264,7 @@
       carregarMovimentosEstoqueAPI();
       carregarFuncionariosAPI();
       carregarOrcamentosAPI();
+      carregarAuditoriaAPI();
       Promise.all([carregarFornecedoresAPI(), carregarPedidosAPI()]).then(carregarFinanceiroAPI);
     }); // busca equipe, clientes, materiais, estoque, funcionários e orçamentos; depois fornecedores+pedidos, e só então o financeiro (que depende dos dois)
   }
@@ -1567,6 +1568,7 @@
       }
       fecharModalUsuario();
       renderUsuariosReal();
+      carregarAuditoriaAPI();
     }catch(e){
       erro.textContent = 'Erro de conexão com a API.';
       erro.style.display = 'block';
@@ -3228,13 +3230,40 @@
     const hora = agora.toLocaleDateString('pt-BR')+' '+agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     auditLog.unshift({usuario, local, acao, hora});
     renderAuditoria();
+    agendarRecargaAuditoria();
     return {usuario, hora};
+  }
+
+  // O histórico fica salvo no servidor (não se perde ao fechar a página). Aqui ele é lido de volta.
+  async function carregarAuditoriaAPI(){
+    if(!API_TOKEN) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/auditoria', { headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok) return; // só administrador consegue ler o histórico completo
+      const rows = await resp.json();
+      auditLog.length = 0;
+      rows.forEach(r => {
+        const d = new Date(r.criado_em);
+        auditLog.push({
+          usuario: r.usuario_nome || '—',
+          local: r.local || '',
+          acao: r.acao || '',
+          hora: d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+        });
+      });
+      renderAuditoria();
+    }catch(e){ /* sem conexão — mantém o que já está na tela */ }
+  }
+  let _timerAuditoria = null;
+  function agendarRecargaAuditoria(){
+    clearTimeout(_timerAuditoria);
+    _timerAuditoria = setTimeout(carregarAuditoriaAPI, 1500);
   }
   function renderAuditoria(){
     const tbl = document.getElementById('tbl-auditoria');
     let html = '<tr><th>Data/Hora</th><th>Usuário</th><th>Onde</th><th>Ação</th></tr>';
     if(auditLog.length === 0){
-      html += '<tr><td colspan="4" style="color:var(--chrome-700);">Nenhuma edição registrada ainda nesta sessão.</td></tr>';
+      html += '<tr><td colspan="4" style="color:var(--chrome-700);">Nenhuma atividade registrada ainda.</td></tr>';
     } else {
       auditLog.forEach(e => {
         html += '<tr><td>'+e.hora+'</td><td>'+e.usuario+'</td><td>'+e.local+'</td><td>'+e.acao+'</td></tr>';
