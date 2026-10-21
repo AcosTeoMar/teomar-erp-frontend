@@ -2759,7 +2759,7 @@
       const nascFmt = f.nascimento ? f.nascimento.split('-').reverse().join('/') : '—';
       const admFmt = f.admissao ? f.admissao.split('-').reverse().join('/') : '—';
       const benef = (f.beneficios && f.beneficios.length) ? f.beneficios.join(', ') : '—';
-      html += '<tr><td>'+f.nome+'</td><td>'+f.cargo+'</td><td>'+f.perfil+'</td><td>'+(f.vinculo||'CLT')+'</td><td>'+(f.doc||'—')+'</td><td>'+nascFmt+'</td><td>'+f.tel+'</td><td>'+f.email+'</td><td>'+benef+'</td><td>'+admFmt+'</td><td><span class="tag '+classe+'">'+f.status+'</span></td><td><button onclick="editarFuncionario(\''+f.id+'\')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button></td></tr>';
+      html += '<tr><td>'+f.nome+'</td><td>'+f.cargo+'</td><td>'+f.perfil+'</td><td>'+(f.vinculo||'CLT')+'</td><td>'+(f.doc||'—')+'</td><td>'+nascFmt+'</td><td>'+f.tel+'</td><td>'+f.email+'</td><td>'+benef+'</td><td>'+admFmt+'</td><td><span class="tag '+classe+'">'+f.status+'</span></td><td><button onclick="editarFuncionario(\''+f.id+'\')" style="background:transparent;border:1px solid rgba(185,198,205,0.25);color:var(--chrome-300);border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Editar</button> <button onclick="excluirFuncionario(\''+f.id+'\')" style="background:transparent;border:1px solid rgba(220,90,90,0.5);color:#e07070;border-radius:2px;padding:5px 10px;font-size:11px;font-family:var(--font-mono);cursor:pointer;">Excluir</button></td></tr>';
     });
     document.getElementById('tbl-funcionarios').innerHTML = html;
     renderAniversariantes();
@@ -2834,6 +2834,23 @@
     document.getElementById('view-funcionarios').scrollIntoView({behavior:'smooth'});
   }
 
+  async function excluirFuncionario(id){
+    const f = FUNCIONARIOS.find(x => String(x.id) === String(id));
+    if(!f) return;
+    if(!confirm('Excluir o cadastro de "'+f.nome+'"? Esta ação não pode ser desfeita.')) return;
+    try{
+      const resp = await fetch(API_BASE+'/api/funcionarios/'+id, { method:'DELETE', headers:{'Authorization':'Bearer '+API_TOKEN} });
+      if(!resp.ok){
+        const erro = await resp.json().catch(()=>({}));
+        alert('Não foi possível excluir: '+(erro.erro || ('erro '+resp.status)));
+        return;
+      }
+      await carregarFuncionariosAPI();
+      carregarAuditoriaAPI();
+    }catch(e){ alert('Sem conexão com o servidor. Nada foi excluído.'); }
+  }
+
+  let _salvandoFuncionario = false;
   function cancelarEdicaoFuncionario(){
     document.getElementById('fn-id').value = '';
     ['fn-nome','fn-cargo','fn-cpf','fn-nascimento','fn-tel','fn-email','fn-endereco','fn-admissao'].forEach(id => document.getElementById(id).value = '');
@@ -2842,6 +2859,11 @@
   }
 
   async function salvarFuncionario(){
+    if(_salvandoFuncionario) return; // evita cadastro duplicado por clique repetido
+    _salvandoFuncionario = true;
+    try{ await _salvarFuncionario(); } finally { _salvandoFuncionario = false; }
+  }
+  async function _salvarFuncionario(){
     const nome = document.getElementById('fn-nome').value.trim();
     if(!nome){ alert('Preencha ao menos o nome completo.'); return; }
     const id = document.getElementById('fn-id').value;
@@ -2891,8 +2913,9 @@
         return;
       }
       registrarEdicao('RH — '+nome, id ? 'Editou o cadastro' : 'Novo funcionário cadastrado ('+dados.perfil+')');
-      await carregarFuncionariosAPI();
       cancelarEdicaoFuncionario();
+      await carregarFuncionariosAPI();
+      alert('Funcionário salvo com sucesso.');
     }catch(e){
       alert('Sem conexão com o servidor. O cadastro NÃO foi salvo. Verifique sua internet e tente novamente.');
     }
